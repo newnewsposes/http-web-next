@@ -1,0 +1,12 @@
+*.pyc
+__pycache__/
+*.db
+*.sqlite
+*.sqlite3
+venv/
+.env
+.vscode/
+.idea/
+HostedFiles/*
+!HostedFiles/.gitkeep
+migrations/versions/*.pyc
