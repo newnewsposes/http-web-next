@@ -81,4 +81,10 @@ def create_app():
     # Set root route handled by home blueprint
     # (home_bp defines @app.route('/'))
     
+    # Also provide a convenience '/ThisIsCloud' redirect to home
+    from flask import redirect, url_for
+    @app.route('/ThisIsCloud')
+    def thisiscloud():
+        return redirect(url_for('home.landing'))
+
     return app
