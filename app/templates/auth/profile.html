@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - http-web-next{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <h1>👤 Profile: {{ current_user.username }}</h1>
+    
+    <div class="profile-card">
+        <div class="profile-info">
+            <h2>Account Information</h2>
+            <p><strong>Username:</strong> {{ current_user.username }}</p>
+            <p><strong>Email:</strong> {{ current_user.email }}</p>
+            <p><strong>Member since:</strong> {{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+            <p><strong>Total files:</strong> {{ file_count }}</p>
+        </div>
+        
+        <div class="storage-info">
+            <h2>Storage Usage</h2>
+            <div class="storage-bar-container">
+                <div class="storage-bar" style="width: {{ storage_percent }}%"></div>
+            </div>
+            <p class="storage-text">
+                {% set used_gb = (storage_used / 1024 / 1024 / 1024) %}
+                {% set quota_gb = (storage_quota / 1024 / 1024 / 1024) %}
+                {{ "%.2f"|format(used_gb) }} GB / {{ "%.2f"|format(quota_gb) }} GB used ({{ "%.1f"|format(storage_percent) }}%)
+            </p>
+        </div>
+    </div>
+    
+    <div class="profile-actions">
+        <a href="{{ url_for('files.my_files') }}" class="btn btn-primary">View My Files</a>
+        <a href="{{ url_for('files.index') }}" class="btn btn-secondary">Back to Files</a>
+    </div>
+</div>
+{% endblock %}

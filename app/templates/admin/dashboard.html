@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - http-web-next{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <h1>📊 Admin Dashboard</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+                <h3>{{ total_users }}</h3>
+                <p>Total Users</p>
+                <small>{{ active_users }} active</small>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">📁</div>
+            <div class="stat-info">
+                <h3>{{ total_files }}</h3>
+                <p>Total Files</p>
+                <small>{{ recent_uploads }} this week</small>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">💾</div>
+            <div class="stat-info">
+                <h3>{{ "%.2f"|format(total_storage / 1024 / 1024 / 1024) }} GB</h3>
+                <p>Total Storage</p>
+                <small>{{ public_files }} public, {{ private_files }} private</small>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">⬇️</div>
+            <div class="stat-info">
+                <h3>{{ total_downloads }}</h3>
+                <p>Total Downloads</p>
+                <small>Across all files</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-grid">
+        <div class="dashboard-section">
+            <h2>🔥 Top Uploaders</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Files</th>
+                        <th>Storage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for uploader in top_uploaders %}
+                    <tr>
+                        <td>{{ uploader.username }}</td>
+                        <td>{{ uploader.file_count }}</td>
+                        <td>{{ "%.2f"|format(uploader.total_size / 1024 / 1024) }} MB</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>📈 Most Downloaded</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Downloads</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in popular_files[:5] %}
+                    <tr>
+                        <td class="truncate">{{ file.original_name }}</td>
+                        <td>{{ file.downloads }}</td>
+                        <td>{{ file.format_size() }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="dashboard-section full-width">
+        <h2>🕐 Recent Uploads</h2>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>User</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th>Downloads</th>
+                    <th>Visibility</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in recent_files %}
+                <tr>
+                    <td class="truncate">{{ file.original_name }}</td>
+                    <td>{{ file.owner.username if file.owner else 'Anonymous' }}</td>
+                    <td>{{ file.format_size() }}</td>
+                    <td>{{ file.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ file.downloads }}</td>
+                    <td>
+                        {% if file.is_public %}
+                            <span class="badge badge-success">Public</span>
+                        {% else %}
+                            <span class="badge badge-danger">Private</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="admin-actions">
+        <a href="{{ url_for('admin.users') }}" class="btn btn-primary">Manage Users</a>
+        <a href="{{ url_for('admin.files') }}" class="btn btn-primary">Manage Files</a>
+        <a href="{{ url_for('admin.analytics') }}" class="btn btn-secondary">View Analytics</a>
+    </div>
+</div>
+{% endblock %}

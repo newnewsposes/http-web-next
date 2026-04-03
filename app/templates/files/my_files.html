@@ -1,36 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}All Files - http-web-next{% endblock %}
+{% block title %}My Files - http-web-next{% endblock %}
 
 {% block content %}
 <div class="files-page">
-    <h1>📁 All Files</h1>
-
-    <section class="upload-section">
-        <h2>Upload File</h2>
-        
-        <div class="drop-zone">
-            <div class="drop-zone-content">
-                <span class="drop-icon">📤</span>
-                <p class="drop-text">Drag & drop your file here</p>
-                <p class="drop-subtext">or</p>
-                <label for="file-input" class="btn btn-primary">Choose File</label>
-                <input type="file" id="file-input" style="display: none;">
-            </div>
-        </div>
-        
-        {% if current_user.is_authenticated %}
-        <div class="upload-options">
-            <label class="checkbox-label">
-                <input type="checkbox" name="is_public" checked> 
-                Make public (anyone can view)
-            </label>
-        </div>
-        {% endif %}
-    </section>
+    <h1>📂 My Files</h1>
+    
+    <div class="storage-summary">
+        <p>
+            <strong>Storage used:</strong> 
+            {{ "%.2f"|format(current_user.get_storage_used() / 1024 / 1024 / 1024) }} GB / 
+            {{ "%.2f"|format(current_user.storage_quota / 1024 / 1024 / 1024) }} GB
+        </p>
+    </div>
 
     <section class="files-section">
-        <h2>Files</h2>
         {% if files %}
             <div class="files-grid">
                 {% for file in files %}
@@ -55,27 +39,20 @@
                             {% if not file.is_public %}<span class="private-badge">🔒 Private</span>{% endif %}
                         </p>
                         <p class="file-date">{{ file.uploaded_at.strftime('%b %d, %Y at %H:%M') }}</p>
-                        {% if file.owner %}
-                            <p class="file-owner">by {{ file.owner.username }}</p>
-                        {% endif %}
                     </div>
                     <div class="file-actions">
                         <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn btn-sm btn-primary">Download</a>
                         <button class="btn btn-sm btn-secondary" onclick="copyShareLink('{{ url_for('files.share', share_token=file.share_token, _external=True) }}')">Copy Link</button>
-                        {% if current_user.is_authenticated and (file.user_id == current_user.id or current_user.is_admin) %}
                         <form method="POST" action="{{ url_for('files.delete', file_id=file.id) }}" style="display: inline;" onsubmit="return confirm('Delete this file?');">
                             <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                         </form>
-                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
         {% else %}
-            <p class="no-files">No files uploaded yet. Be the first!</p>
+            <p class="no-files">You haven't uploaded any files yet.</p>
         {% endif %}
     </section>
 </div>
-
-<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
 {% endblock %}

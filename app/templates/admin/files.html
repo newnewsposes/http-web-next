@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}File Management - http-web-next{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <h1>📁 File Management</h1>
+    
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Owner</th>
+                <th>Size</th>
+                <th>Downloads</th>
+                <th>Uploaded</th>
+                <th>Visibility</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for file in files %}
+            <tr>
+                <td class="truncate">{{ file.original_name }}</td>
+                <td>{{ file.owner.username if file.owner else 'Anonymous' }}</td>
+                <td>{{ file.format_size() }}</td>
+                <td>{{ file.downloads }}</td>
+                <td>{{ file.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    {% if file.is_public %}
+                        <span class="badge badge-success">Public</span>
+                    {% else %}
+                        <span class="badge badge-danger">Private</span>
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn btn-sm btn-primary">Download</a>
+                    <button class="btn btn-sm btn-secondary" onclick="copyShareLink('{{ url_for('files.share', share_token=file.share_token, _external=True) }}')">Share</button>
+                    <form method="POST" action="{{ url_for('files.delete', file_id=file.id) }}" style="display: inline;" onsubmit="return confirm('Delete this file?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.files', page=pagination.prev_num) }}" class="btn btn-sm">← Previous</a>
+        {% endif %}
+        
+        <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+        
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.files', page=pagination.next_num) }}" class="btn btn-sm">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

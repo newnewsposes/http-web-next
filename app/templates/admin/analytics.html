@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - http-web-next{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <h1>📈 Analytics</h1>
+    
+    <div class="analytics-grid">
+        <div class="chart-container">
+            <h2>Upload Trends (Last 30 Days)</h2>
+            <canvas id="uploadTrendsChart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <h2>File Type Distribution</h2>
+            <canvas id="fileTypesChart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Storage by User (Top 10)</h2>
+            <canvas id="storageByUserChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Upload Trends Chart
+const uploadTrendsCtx = document.getElementById('uploadTrendsChart').getContext('2d');
+new Chart(uploadTrendsCtx, {
+    type: 'line',
+    data: {
+        labels: {{ upload_trends | map(attribute='date') | list | tojson }},
+        datasets: [{
+            label: 'Uploads',
+            data: {{ upload_trends | map(attribute='count') | list | tojson }},
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: { color: '#f1f5f9' }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: '#94a3b8' },
+                grid: { color: '#334155' }
+            },
+            x: {
+                ticks: { color: '#94a3b8' },
+                grid: { color: '#334155' }
+            }
+        }
+    }
+});
+
+// File Types Chart
+const fileTypesCtx = document.getElementById('fileTypesChart').getContext('2d');
+new Chart(fileTypesCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ file_types | map(attribute='type') | list | tojson }},
+        datasets: [{
+            data: {{ file_types | map(attribute='count') | list | tojson }},
+            backgroundColor: [
+                '#6366f1',
+                '#10b981',
+                '#f59e0b',
+                '#ef4444',
+                '#3b82f6',
+                '#8b5cf6',
+                '#ec4899'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: { color: '#f1f5f9' }
+            }
+        }
+    }
+});
+
+// Storage by User Chart
+const storageByUserCtx = document.getElementById('storageByUserChart').getContext('2d');
+new Chart(storageByUserCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ storage_by_user | map(attribute='username') | list | tojson }},
+        datasets: [{
+            label: 'Storage (MB)',
+            data: {{ storage_by_user | map(attribute='storage') | map('default', 0) | map('int') | map('divide', 1024*1024) | list | tojson }},
+            backgroundColor: '#6366f1'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: { color: '#f1f5f9' }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: '#94a3b8' },
+                grid: { color: '#334155' }
+            },
+            x: {
+                ticks: { color: '#94a3b8' },
+                grid: { color: '#334155' }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

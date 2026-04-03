@@ -18,5 +18,18 @@ class File(db.Model):
     downloads = db.Column(db.Integer, default=0)
     share_token = db.Column(db.String(64), unique=True, nullable=False, default=lambda: secrets.token_urlsafe(16))
     
+    # User ownership (nullable for backwards compatibility with anonymous uploads)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    is_public = db.Column(db.Boolean, default=True, nullable=False)  # Public vs private file
+    
     def __repr__(self):
         return f'<File {self.original_name}>'
+    
+    def format_size(self):
+        """Return human-readable file size."""
+        size = self.size
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} PB"

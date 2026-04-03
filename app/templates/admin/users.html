@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - http-web-next{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <h1>👥 User Management</h1>
+    
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Files</th>
+                <th>Storage Used</th>
+                <th>Quota</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in user_stats %}
+            {% set user = stat.user %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ stat.file_count }}</td>
+                <td>{{ "%.2f"|format(stat.storage_used / 1024 / 1024 / 1024) }} GB</td>
+                <td>
+                    {% if user.storage_quota %}
+                        {{ "%.2f"|format(user.storage_quota / 1024 / 1024 / 1024) }} GB
+                    {% else %}
+                        Unlimited
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.is_active %}
+                        <span class="badge badge-success">Active</span>
+                    {% else %}
+                        <span class="badge badge-danger">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.is_admin %}
+                        <span class="badge badge-primary">Admin</span>
+                    {% else %}
+                        <span class="badge badge-secondary">User</span>
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    {% if user.id != current_user.id %}
+                    <form method="POST" action="{{ url_for('admin.toggle_user_active', user_id=user.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-warning">
+                            {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('admin.toggle_user_admin', user_id=user.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-info">
+                            {% if user.is_admin %}Revoke Admin{% else %}Make Admin{% endif %}
+                        </button>
+                    </form>
+                    
+                    <button class="btn btn-sm btn-secondary" onclick="showQuotaModal({{ user.id }}, '{{ user.username }}', {{ user.storage_quota or 0 }})">
+                        Edit Quota
+                    </button>
+                    {% else %}
+                    <span class="text-muted">You</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.users', page=pagination.prev_num) }}" class="btn btn-sm">← Previous</a>
+        {% endif %}
+        
+        <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+        
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.users', page=pagination.next_num) }}" class="btn btn-sm">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quota Modal -->
+<div id="quotaModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Edit Storage Quota</h2>
+        <form method="POST" id="quotaForm">
+            <div class="form-group">
+                <label for="quota_gb">Storage Quota (GB)</label>
+                <input type="number" name="quota_gb" id="quota_gb" step="0.1" min="0" required>
+                <small>Set to 0 for unlimited</small>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="btn btn-primary">Update Quota</button>
+                <button type="button" class="btn btn-secondary" onclick="closeQuotaModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showQuotaModal(userId, username, currentQuota) {
+    const modal = document.getElementById('quotaModal');
+    const form = document.getElementById('quotaForm');
+    const input = document.getElementById('quota_gb');
+    
+    form.action = `/admin/users/${userId}/update-quota`;
+    input.value = currentQuota ? (currentQuota / 1024 / 1024 / 1024).toFixed(2) : 0;
+    
+    modal.style.display = 'flex';
+}
+
+function closeQuotaModal() {
+    document.getElementById('quotaModal').style.display = 'none';
+}
+
+// Close modal on background click
+document.getElementById('quotaModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeQuotaModal();
+    }
+});
+</script>
+{% endblock %}
