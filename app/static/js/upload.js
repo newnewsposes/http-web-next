@@ -280,6 +280,15 @@ export function initUploads() {
                 }
             });
         }
+
+        // Attach share button handlers (CSP-friendly; uses data-share-url)
+        const shareButtons = document.querySelectorAll('.btn-share');
+        shareButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const url = btn.getAttribute('data-share-url');
+                if (url) copyShareLink(url, btn);
+            });
+        });
     }
 
     // Initialize handlers immediately
