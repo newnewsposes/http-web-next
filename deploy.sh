@@ -6,10 +6,20 @@ set -e
 echo "🚀 ThisIsCloud Deployment Script"
 echo "==================================="
 
-# Check if running as root
+# Allow running as root or via sudo. If running as root, warn and confirm.
 if [ "$EUID" -eq 0 ]; then
-    echo "❌ Please don't run as root. Run as your deployment user."
-    exit 1
+    echo "⚠️  You are running this script as root. This is allowed but not recommended."
+    read -p "Continue as root? (y/N): " CONT
+    if [ "${CONT,,}" != "y" ]; then
+        echo "Aborting. Re-run as a non-root deployment user or re-run and answer 'y' to continue."
+        exit 1
+    fi
+    SUDO=""
+    # If script was invoked via sudo, SUDO_USER may be set to the invoking user
+    DEPLOY_USER=${SUDO_USER:-root}
+else
+    SUDO="sudo"
+    DEPLOY_USER=$USER
 fi
 
 # Configuration
