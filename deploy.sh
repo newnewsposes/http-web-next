@@ -78,6 +78,16 @@ echo ""
 echo "💾 Running database migrations..."
 export SECRET_KEY="$SECRET_KEY"
 export DATABASE_URL="postgresql://fileuser:$DB_PASSWORD@localhost/filehosting"
+
+# Initialize migrations directory if missing, then run migrate & upgrade
+if [ ! -d "migrations" ]; then
+    echo "migrations folder not found — initializing Alembic (flask db init)"
+    flask db init || true
+    echo "Creating initial migration (if models present)"
+    flask db migrate -m "Initial migration" || true
+fi
+
+# Apply migrations (upgrade)
 flask db upgrade
 
 echo ""
