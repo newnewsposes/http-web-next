@@ -4,17 +4,20 @@
 
 {% block content %}
 <div class="files-page">
-    <h1>📁 All Files</h1>
+    <h1><i data-lucide="folder-open" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;"></i>All Files</h1>
 
     <section class="upload-section">
-        <h2>Upload File</h2>
+        <h2><i data-lucide="upload-cloud" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>Upload File</h2>
         
         <div class="drop-zone">
             <div class="drop-zone-content">
-                <span class="drop-icon">📤</span>
+                <span class="drop-icon"><i data-lucide="upload" style="width: 64px; height: 64px;"></i></span>
                 <p class="drop-text">Drag & drop your file here</p>
                 <p class="drop-subtext">or</p>
-                <label for="file-input" class="btn btn-primary">Choose File</label>
+                <label for="file-input" class="btn btn-primary">
+                    <i data-lucide="file-plus" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+                    Choose File
+                </label>
                 <input type="file" id="file-input" style="display: none;">
             </div>
         </div>
@@ -23,6 +26,7 @@
         <div class="upload-options">
             <label class="checkbox-label">
                 <input type="checkbox" name="is_public" checked> 
+                <i data-lucide="eye" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;"></i>
                 Make public (anyone can view)
             </label>
         </div>
@@ -30,41 +34,64 @@
     </section>
 
     <section class="files-section">
-        <h2>Files</h2>
+        <h2><i data-lucide="files" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>Files</h2>
         {% if files %}
             <div class="files-grid">
                 {% for file in files %}
                 <div class="file-card">
                     <div class="file-icon">
                         {% if file.mimetype and file.mimetype.startswith('image/') %}
-                            🖼️
+                            <i data-lucide="image" style="width: 48px; height: 48px; color: var(--primary);"></i>
                         {% elif file.mimetype and file.mimetype.startswith('video/') %}
-                            🎬
+                            <i data-lucide="video" style="width: 48px; height: 48px; color: var(--primary);"></i>
                         {% elif file.mimetype and file.mimetype.startswith('audio/') %}
-                            🎵
+                            <i data-lucide="music" style="width: 48px; height: 48px; color: var(--primary);"></i>
                         {% elif file.mimetype and 'pdf' in file.mimetype %}
-                            📄
+                            <i data-lucide="file-text" style="width: 48px; height: 48px; color: var(--primary);"></i>
+                        {% elif file.mimetype and 'zip' in file.mimetype or file.mimetype and 'rar' in file.mimetype %}
+                            <i data-lucide="file-archive" style="width: 48px; height: 48px; color: var(--primary);"></i>
+                        {% elif file.mimetype and 'application/' in file.mimetype %}
+                            <i data-lucide="file-code" style="width: 48px; height: 48px; color: var(--primary);"></i>
                         {% else %}
-                            📦
+                            <i data-lucide="file" style="width: 48px; height: 48px; color: var(--primary);"></i>
                         {% endif %}
                     </div>
                     <div class="file-info">
                         <h3 class="file-name">{{ file.original_name }}</h3>
                         <p class="file-meta">
                             {{ file.format_size() }} • {{ file.downloads }} downloads
-                            {% if not file.is_public %}<span class="private-badge">🔒 Private</span>{% endif %}
+                            {% if not file.is_public %}
+                                <span class="private-badge">
+                                    <i data-lucide="lock" style="width: 12px; height: 12px; vertical-align: middle;"></i> Private
+                                </span>
+                            {% endif %}
                         </p>
-                        <p class="file-date">{{ file.uploaded_at.strftime('%b %d, %Y at %H:%M') }}</p>
+                        <p class="file-date">
+                            <i data-lucide="calendar" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+                            {{ file.uploaded_at.strftime('%b %d, %Y at %H:%M') }}
+                        </p>
                         {% if file.owner %}
-                            <p class="file-owner">by {{ file.owner.username }}</p>
+                            <p class="file-owner">
+                                <i data-lucide="user" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+                                by {{ file.owner.username }}
+                            </p>
                         {% endif %}
                     </div>
                     <div class="file-actions">
-                        <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn btn-sm btn-primary">Download</a>
-                        <button class="btn btn-sm btn-secondary" onclick="copyShareLink('{{ url_for('files.share', share_token=file.share_token, _external=True) }}')">Copy Link</button>
+                        <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn btn-sm btn-primary">
+                            <i data-lucide="download" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+                            Download
+                        </a>
+                        <button class="btn btn-sm btn-secondary" onclick="copyShareLink('{{ url_for('files.share', share_token=file.share_token, _external=True) }}')">
+                            <i data-lucide="share-2" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+                            Share
+                        </button>
                         {% if current_user.is_authenticated and (file.user_id == current_user.id or current_user.is_admin) %}
                         <form method="POST" action="{{ url_for('files.delete', file_id=file.id) }}" style="display: inline;" onsubmit="return confirm('Delete this file?');">
-                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+                                Delete
+                            </button>
                         </form>
                         {% endif %}
                     </div>
@@ -78,4 +105,8 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+<script>
+    // Re-initialize icons after page load
+    setTimeout(() => lucide.createIcons(), 100);
+</script>
 {% endblock %}

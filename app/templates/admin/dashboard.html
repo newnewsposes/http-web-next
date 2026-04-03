@@ -4,11 +4,11 @@
 
 {% block content %}
 <div class="admin-dashboard">
-    <h1>📊 Admin Dashboard</h1>
+    <h1><i data-lucide="bar-chart-3" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;"></i>Admin Dashboard</h1>
     
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">👥</div>
+            <div class="stat-icon"><i data-lucide="users" style="width: 48px; height: 48px;"></i></div>
             <div class="stat-info">
                 <h3>{{ total_users }}</h3>
                 <p>Total Users</p>
@@ -17,7 +17,7 @@
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon">📁</div>
+            <div class="stat-icon"><i data-lucide="files" style="width: 48px; height: 48px;"></i></div>
             <div class="stat-info">
                 <h3>{{ total_files }}</h3>
                 <p>Total Files</p>
@@ -26,7 +26,7 @@
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon">💾</div>
+            <div class="stat-icon"><i data-lucide="hard-drive" style="width: 48px; height: 48px;"></i></div>
             <div class="stat-info">
                 <h3>{{ "%.2f"|format(total_storage / 1024 / 1024 / 1024) }} GB</h3>
                 <p>Total Storage</p>
@@ -35,7 +35,7 @@
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon">⬇️</div>
+            <div class="stat-icon"><i data-lucide="download" style="width: 48px; height: 48px;"></i></div>
             <div class="stat-info">
                 <h3>{{ total_downloads }}</h3>
                 <p>Total Downloads</p>
@@ -46,7 +46,7 @@
     
     <div class="dashboard-grid">
         <div class="dashboard-section">
-            <h2>🔥 Top Uploaders</h2>
+            <h2><i data-lucide="flame" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>Top Uploaders</h2>
             <table class="admin-table">
                 <thead>
                     <tr>
@@ -68,7 +68,7 @@
         </div>
         
         <div class="dashboard-section">
-            <h2>📈 Most Downloaded</h2>
+            <h2><i data-lucide="trending-up" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>Most Downloaded</h2>
             <table class="admin-table">
                 <thead>
                     <tr>
@@ -91,7 +91,7 @@
     </div>
     
     <div class="dashboard-section full-width">
-        <h2>🕐 Recent Uploads</h2>
+        <h2><i data-lucide="clock" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>Recent Uploads</h2>
         <table class="admin-table">
             <thead>
                 <tr>
@@ -113,9 +113,9 @@
                     <td>{{ file.downloads }}</td>
                     <td>
                         {% if file.is_public %}
-                            <span class="badge badge-success">Public</span>
+                            <span class="badge badge-success"><i data-lucide="eye" style="width: 12px; height: 12px; vertical-align: middle;"></i> Public</span>
                         {% else %}
-                            <span class="badge badge-danger">Private</span>
+                            <span class="badge badge-danger"><i data-lucide="eye-off" style="width: 12px; height: 12px; vertical-align: middle;"></i> Private</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -125,9 +125,23 @@
     </div>
     
     <div class="admin-actions">
-        <a href="{{ url_for('admin.users') }}" class="btn btn-primary">Manage Users</a>
-        <a href="{{ url_for('admin.files') }}" class="btn btn-primary">Manage Files</a>
-        <a href="{{ url_for('admin.analytics') }}" class="btn btn-secondary">View Analytics</a>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-primary">
+            <i data-lucide="users-cog" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+            Manage Users
+        </a>
+        <a href="{{ url_for('admin.files') }}" class="btn btn-primary">
+            <i data-lucide="folder-cog" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+            Manage Files
+        </a>
+        <a href="{{ url_for('admin.analytics') }}" class="btn btn-secondary">
+            <i data-lucide="line-chart" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+            View Analytics
+        </a>
     </div>
 </div>
+
+<script>
+    // Re-initialize icons after page load
+    setTimeout(() => lucide.createIcons(), 100);
+</script>
 {% endblock %}
