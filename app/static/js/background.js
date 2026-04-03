@@ -7,12 +7,19 @@ class InteractiveBackground {
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
         this.particles = [];
-        this.mouse = { x: 0, y: 0 };
-        this.particleCount = 150; // Increased from 80
-        
+        this.mouse = { x: -9999, y: -9999 };
+        this.baseParticleCount = 150; // base max
+        this.particleCount = this.baseParticleCount;
+        this.connectionDistance = 150;
+        this.running = true;
+        this.intensity = parseInt(localStorage.getItem('bgIntensity') || '70', 10); // 0-100
+
+        this.mouseNeedsUpdate = false; // for rAF throttling
+
         this.setupCanvas();
         this.createParticles();
         this.setupEventListeners();
+        this.handleVisibility();
         this.animate();
     }
     
@@ -27,6 +34,11 @@ class InteractiveBackground {
         document.body.prepend(this.canvas);
         
         this.resize();
+
+        // Respect background intensity stored in localStorage
+        const intensity = parseInt(localStorage.getItem('bgIntensity') || '70', 10);
+        this.particleCount = Math.max(40, Math.floor(this.baseParticleCount * (intensity / 100)));
+        this.connectionDistance = 80 + Math.floor(70 * (intensity / 100));
     }
     
     resize() {
@@ -49,14 +61,15 @@ class InteractiveBackground {
     }
     
     createParticles() {
+        this.particles = [];
         for (let i = 0; i < this.particleCount; i++) {
             this.particles.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                vx: (Math.random() - 0.5) * 1.2, // Faster movement
-                vy: (Math.random() - 0.5) * 1.2, // Faster movement
-                radius: Math.random() * 2 + 1,
-                opacity: Math.random() * 0.5 + 0.3
+                vx: (Math.random() - 0.5) * (0.8 + Math.random() * 1.4),
+                vy: (Math.random() - 0.5) * (0.8 + Math.random() * 1.4),
+                radius: Math.random() * 2 + 0.8,
+                opacity: Math.random() * 0.5 + 0.2
             });
         }
     }
@@ -113,17 +126,17 @@ class InteractiveBackground {
             this.ctx.fillStyle = `rgba(99, 102, 241, ${particle.opacity})`;
             this.ctx.fill();
             
-            // Draw connections (increased distance for denser mesh)
+                // Draw connections (distance depends on intensity)
             this.particles.slice(i + 1).forEach(otherParticle => {
                 const dx = otherParticle.x - particle.x;
                 const dy = otherParticle.y - particle.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 150) { // Increased from 120
-                    const opacity = (1 - distance / 150) * 0.4; // Brighter lines
+
+                if (distance < this.connectionDistance) {
+                    const opacity = (1 - distance / this.connectionDistance) * (0.5 * (this.intensity / 100));
                     this.ctx.beginPath();
                     this.ctx.strokeStyle = `rgba(99, 102, 241, ${opacity})`;
-                    this.ctx.lineWidth = 0.8; // Thicker lines
+                    this.ctx.lineWidth = 0.6 * (this.intensity / 100);
                     this.ctx.moveTo(particle.x, particle.y);
                     this.ctx.lineTo(otherParticle.x, otherParticle.y);
                     this.ctx.stroke();
@@ -133,9 +146,31 @@ class InteractiveBackground {
         
         requestAnimationFrame(() => this.animate());
     }
+
+    handleVisibility() {
+        document.addEventListener('visibilitychange', () => {
+            this.running = !document.hidden;
+        });
+    }
+
+    setIntensity(value) {
+        this.intensity = value;
+        localStorage.setItem('bgIntensity', String(value));
+        // Recompute particle count and connection distance
+        this.particleCount = Math.max(40, Math.floor(this.baseParticleCount * (this.intensity / 100)));
+        this.connectionDistance = 80 + Math.floor(70 * (this.intensity / 100));
+        this.createParticles();
+    }
 }
 
-// Initialize on page load
+// Expose InteractiveBackground to global so we can lazy-init
+window.InteractiveBackground = InteractiveBackground;
+
+// Initialize on page load only if allowed (base file may lazy-load)
 document.addEventListener('DOMContentLoaded', () => {
-    new InteractiveBackground();
+    const saved = localStorage.getItem('bgEnabled');
+    const allow = saved !== 'false' && !document.body.classList.contains('reduced-motion');
+    if (allow) {
+        new InteractiveBackground();
+    }
 });

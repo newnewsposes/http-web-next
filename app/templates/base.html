@@ -72,6 +72,8 @@
             <p>&copy; 2026 http-web-next | Built with Flask</p>
         </div>
     </footer>
+
+    {% include 'partials/settings.html' %}
     
     <!-- Interactive background -->
     <script src="{{ url_for('static', filename='js/background.js') }}" defer></script>
@@ -106,8 +108,11 @@
             if (window.lucide) setTimeout(() => lucide.createIcons(), 100);
 
             // Lazy-load background after 1s (to avoid blocking)
-            if ('matchMedia' in window && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            // Respect prefers-reduced-motion or user's saved preference
+            const savedPref = localStorage.getItem('reduceMotion');
+            if (savedPref === 'true' || ('matchMedia' in window && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
                 window.enableInteractiveBg = false;
+                document.body.classList.add('reduced-motion');
             } else {
                 window.enableInteractiveBg = true;
                 setTimeout(() => {
@@ -115,6 +120,52 @@
                         if (window.InteractiveBackground) new InteractiveBackground();
                     } catch (e) { /* ignore */ }
                 }, 1000);
+            }
+
+            // Settings UI handlers
+            const settingsToggle = document.getElementById('settings-toggle');
+            const settingsPanel = document.getElementById('settings-panel');
+            if (settingsToggle && settingsPanel) {
+                settingsToggle.addEventListener('click', () => {
+                    settingsPanel.classList.toggle('open');
+                });
+
+                // Background enable/disable
+                const bgToggle = document.getElementById('bg-toggle');
+                if (bgToggle) {
+                    bgToggle.checked = localStorage.getItem('bgEnabled') !== 'false';
+                    bgToggle.addEventListener('change', (e) => {
+                        localStorage.setItem('bgEnabled', e.target.checked ? 'true' : 'false');
+                        if (!e.target.checked) {
+                            // remove canvas if exists
+                            const canvas = document.querySelector('canvas');
+                            if (canvas) canvas.remove();
+                            window.enableInteractiveBg = false;
+                        } else {
+                            window.enableInteractiveBg = true;
+                            try { if (window.InteractiveBackground) new InteractiveBackground(); } catch(e){}
+                        }
+                    });
+                }
+
+                const reduceMotionToggle = document.getElementById('reduce-motion-toggle');
+                if (reduceMotionToggle) {
+                    reduceMotionToggle.checked = localStorage.getItem('reduceMotion') === 'true';
+                    reduceMotionToggle.addEventListener('change', (e) => {
+                        localStorage.setItem('reduceMotion', e.target.checked ? 'true' : 'false');
+                        if (e.target.checked) {
+                            document.body.classList.add('reduced-motion');
+                            // remove canvas
+                            const canvas = document.querySelector('canvas');
+                            if (canvas) canvas.remove();
+                            window.enableInteractiveBg = false;
+                        } else {
+                            document.body.classList.remove('reduced-motion');
+                            window.enableInteractiveBg = true;
+                            try { if (window.InteractiveBackground) new InteractiveBackground(); } catch(e){}
+                        }
+                    });
+                }
             }
         });
     </script>

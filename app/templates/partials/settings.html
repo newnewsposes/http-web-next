@@ -1,0 +1,13 @@
+<div id="settings-panel" class="settings-panel">
+  <button id="settings-toggle" class="settings-button" aria-label="Settings">
+    <i data-lucide="settings" style="width:18px;height:18px;"></i>
+  </button>
+  <div class="settings-content">
+    <h3>Appearance</h3>
+    <label class="settings-row"><input type="checkbox" id="bg-toggle"> Enable animated background</label>
+    <label class="settings-row"><input type="checkbox" id="reduce-motion-toggle"> Reduce motion</label>
+    <h3>Background intensity</h3>
+    <input type="range" id="bg-intensity" min="0" max="100" value="70">
+  </div>
+</div>
+<script>setTimeout(()=>lucide.createIcons(),50)</script>
