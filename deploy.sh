@@ -87,6 +87,15 @@ if [ ! -d "migrations" ]; then
     flask db migrate -m "Initial migration" || true
 fi
 
+# Ensure tables exist according to models (guards against empty DB on fresh clones)
+python - <<'PY'
+from app import create_app, db
+app = create_app()
+with app.app_context():
+    db.create_all()
+    print('Ensured DB tables via db.create_all()')
+PY
+
 # Apply migrations (upgrade)
 flask db upgrade
 
