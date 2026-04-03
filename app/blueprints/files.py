@@ -66,6 +66,10 @@ def upload():
     
     # Get privacy setting
     is_public = request.form.get('is_public', 'true') == 'true'
+    # Browsable is an admin-only flag; default False for non-admins
+    is_browsable = False
+    if current_user.is_admin:
+        is_browsable = request.form.get('is_browsable', 'false') == 'true'
     
     # Create database record
     new_file = File(
@@ -74,7 +78,8 @@ def upload():
         mimetype=file.mimetype,
         size=file_size,
         user_id=current_user.id if current_user.is_authenticated else None,
-        is_public=is_public
+        is_public=is_public,
+        is_browsable=is_browsable
     )
     db.session.add(new_file)
     db.session.commit()
