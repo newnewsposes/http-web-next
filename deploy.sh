@@ -39,8 +39,36 @@ sudo apt install -y python3-pip python3-venv nginx postgresql certbot python3-ce
 
 echo ""
 echo "🗄️  Setting up PostgreSQL..."
-sudo -u postgres psql -c "CREATE DATABASE filehosting;" || true
-sudo -u postgres psql -c "CREATE USER fileuser WITH PASSWORD '$DB_PASSWORD';" || true
+
+# Check if database exists
+DB_EXISTS=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='filehosting'")
+
+if [ "$DB_EXISTS" = "1" ]; then
+    echo "⚠️  Database 'filehosting' already exists"
+    read -p "Rebuild from scratch? This will DELETE ALL DATA! (y/N): " REBUILD
+    if [ "${REBUILD,,}" = "y" ]; then
+        echo "🗑️  Dropping existing database..."
+        sudo -u postgres psql -c "DROP DATABASE filehosting;"
+        sudo -u postgres psql -c "CREATE DATABASE filehosting;"
+        echo "✅ Database recreated"
+    else
+        echo "Using existing database"
+    fi
+else
+    sudo -u postgres psql -c "CREATE DATABASE filehosting;"
+    echo "✅ Database created"
+fi
+
+# Create user if doesn't exist
+USER_EXISTS=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='fileuser'")
+if [ "$USER_EXISTS" != "1" ]; then
+    sudo -u postgres psql -c "CREATE USER fileuser WITH PASSWORD '$DB_PASSWORD';"
+    echo "✅ User created"
+else
+    echo "User 'fileuser' exists, updating password..."
+    sudo -u postgres psql -c "ALTER USER fileuser WITH PASSWORD '$DB_PASSWORD';"
+fi
+
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE filehosting TO fileuser;"
 
 echo ""
@@ -76,56 +104,20 @@ pip install -r requirements.txt
 pip install gunicorn psycopg2-binary
 
 echo ""
-echo "💾 Running database migrations..."
+echo "💾 Creating database tables..."
 export SECRET_KEY="$SECRET_KEY"
 export DATABASE_URL="postgresql://fileuser:$DB_PASSWORD@localhost/filehosting"
 
-# Initialize migrations directory if missing, then run migrate & upgrade
-if [ ! -d "migrations" ]; then
-    echo "migrations folder not found — initializing Alembic (flask db init)"
-    flask db init || true
-    echo "Creating initial migration (if models present)"
-    flask db migrate -m "Initial migration" || true
-fi
-
-# Always create local sqlite tables first to ensure schema exists (prevents DB-connect failures during fresh deploy)
-# This will not change your configured DATABASE_URL but ensures files.db has tables
-# IMPORTANT: Unset LD_PRELOAD to bypass proxychains for localhost connections
-env -u LD_PRELOAD DATABASE_URL="sqlite:///files.db" python - <<'PY'
-from app import create_app, db
-app = create_app()
-with app.app_context():
-    db.create_all()
-    print('Ensured DB tables in local files.db via db.create_all()')
-PY
-
-# Now attempt to run alembic migrations against the configured DB (if available)
+# Create all tables using db.create_all() - simpler and more reliable than migrations
 # IMPORTANT: Unset LD_PRELOAD to bypass proxychains for localhost PostgreSQL
 env -u LD_PRELOAD python - <<'PY'
-import os
-from alembic import command
-from alembic.config import Config
-from sqlalchemy.exc import OperationalError
 from app import create_app, db
 
 app = create_app()
 with app.app_context():
-    uri = app.config.get('SQLALCHEMY_DATABASE_URI')
-    print('Configured SQLALCHEMY_DATABASE_URI =', uri)
-    if uri and uri.startswith('sqlite'):
-        print('Configured DB is sqlite; alembic upgrade skipped (local files.db already created)')
-    else:
-        try:
-            print('Attempting alembic upgrade against configured DB...')
-            cfg = Config('migrations/alembic.ini')
-            command.upgrade(cfg, 'head')
-            print('Alembic upgrade completed')
-        except OperationalError as oe:
-            print('OperationalError during alembic upgrade:', oe)
-            print('Configured DB may be unreachable; continuing with local sqlite setup. You can re-run migrations later when DB is available.')
-        except Exception as e:
-            print('Alembic upgrade failed:', e)
-            print('You may need to run migrations when the DB is available.')
+    print('Creating database tables...')
+    db.create_all()
+    print('✅ Database tables created successfully')
 PY
 
 echo ""
