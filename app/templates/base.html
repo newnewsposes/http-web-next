@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}http-web-next{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Production CSS (bundled) -->
+    {% set prod_css = url_for('static', filename='dist/style.min.css') %}
+    {% set dev_css = url_for('static', filename='css/style.css') %}
+    <link rel="stylesheet" href="{{ prod_css if (prod_css and prod_css|length) else dev_css }}" onerror="this.onerror=null;this.href='{{ dev_css }}'">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -75,12 +78,13 @@
 
     {% include 'partials/settings.html' %}
     
-    <!-- Interactive background -->
-    <script src="{{ url_for('static', filename='js/background.js') }}" defer></script>
-    
-    <!-- Uploads and PJAX -->
-    <script src="{{ url_for('static', filename='js/pjax.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/upload.js') }}" type="module" defer></script>
+    <!-- Production JS bundle (bundled) -->
+    {% set prod_js = url_for('static', filename='dist/app.min.js') %}
+    {% set dev_pjax = url_for('static', filename='js/pjax.js') %}
+    {% set dev_background = url_for('static', filename='js/background.js') %}
+    {% set dev_upload = url_for('static', filename='js/upload.js') %}
+
+    <script src="{{ prod_js }}" defer onerror="(function(){var s=document.createElement('script');s.src='{{ dev_pjax }}';document.body.appendChild(s);var s2=document.createElement('script');s2.src='{{ dev_background }}';s2.defer=true;document.body.appendChild(s2);var s3=document.createElement('script');s3.src='{{ dev_upload }}';s3.type='module';s3.defer=true;document.body.appendChild(s3);})();"></script>
 
     <!-- Initialize Lucide icons and page handlers -->
     <script>
