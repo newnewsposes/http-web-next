@@ -39,6 +39,24 @@ $SUDO_CMD apt install -y python3-pip python3-venv nginx postgresql certbot pytho
 echo ""
 echo "🗄️  Setting up PostgreSQL..."
 
+# Check if proxychains is active and warn about localhost exclusion
+if [ -n "$LD_PRELOAD" ] && echo "$LD_PRELOAD" | grep -q "proxychains"; then
+    echo "⚠️  Proxychains detected. Ensuring localhost (127.0.0.1) is not proxied..."
+    # Check proxychains config for localnet exclusion
+    PROXY_CONF="/etc/proxychains4.conf"
+    if [ ! -f "$PROXY_CONF" ]; then
+        PROXY_CONF="/etc/proxychains.conf"
+    fi
+    if [ -f "$PROXY_CONF" ]; then
+        if ! grep -q "^localnet 127.0.0.0/255.0.0.0" "$PROXY_CONF"; then
+            echo "⚠️  WARNING: proxychains may intercept localhost connections!"
+            echo "   Add this line to $PROXY_CONF under [ProxyList]:"
+            echo "   localnet 127.0.0.0/255.0.0.0"
+            echo ""
+        fi
+    fi
+fi
+
 # Check PostgreSQL version
 PG_VERSION=$(sudo -u postgres psql -tAc "SELECT version();" | grep -oP "PostgreSQL \K[0-9]+")
 echo "Detected PostgreSQL version: $PG_VERSION"
@@ -90,14 +108,13 @@ $SUDO_CMD chown $DEPLOY_USER:$DEPLOY_USER $INSTALL_DIR
 if [ -d "$INSTALL_DIR/.git" ]; then
     echo "Updating existing installation..."
     cd $INSTALL_DIR
-    # Unset proxy variables for git operations
-    LD_PRELOAD="" http_proxy="" https_proxy="" git pull
+    # Allow proxychains for git (needed for GitHub access in some environments)
+    git pull
 else
     echo "Cloning repository..."
     REPO_URL="https://github.com/newnewsposes/http-web-next.git"
-    # Clone without proxychains - force empty LD_PRELOAD
-    echo "Cloning without proxy..."
-    LD_PRELOAD="" http_proxy="" https_proxy="" GIT_TERMINAL_PROMPT=0 git clone "$REPO_URL" "$INSTALL_DIR"
+    # Allow proxychains for git clone (needed for GitHub access)
+    git clone "$REPO_URL" "$INSTALL_DIR"
     cd $INSTALL_DIR
 fi
 
