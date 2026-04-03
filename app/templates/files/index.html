@@ -96,7 +96,7 @@
                             <i data-lucide="download" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
                             Download
                         </a>
-                        <button class="btn btn-sm btn-secondary" onclick="copyShareLink('{{ url_for('files.download', file_id=file.id, _external=True) }}')">
+                        <button class="btn btn-sm btn-secondary btn-share" data-share-url="{{ url_for('files.download', file_id=file.id, _external=True) }}">
                             <i data-lucide="share-2" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
                             Share
                         </button>
