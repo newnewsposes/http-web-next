@@ -129,7 +129,11 @@ def delete(file_id):
     # Delete database record
     db.session.delete(file_record)
     db.session.commit()
-    
+
+    # If this is an AJAX request, return JSON for smoother frontend handling
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return ({'status': 'ok', 'message': f'File "{file_record.original_name}" deleted'}), 200
+
     flash(f'File "{file_record.original_name}" deleted successfully', 'success')
     return redirect(url_for('files.index'))
 
