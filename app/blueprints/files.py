@@ -18,12 +18,13 @@ def index():
     Public files are visible to everyone. Private files are visible to owners and admins only.
     """
     if current_user.is_authenticated:
+        # Logged-in users see public files + their own files
         files = File.query.filter(
             db.or_(File.is_public == True, File.user_id == current_user.id)
         ).order_by(File.uploaded_at.desc()).all()
     else:
-        # Show only public files to anonymous users
-        files = File.query.filter_by(is_public=True).order_by(File.uploaded_at.desc()).all()
+        # Anonymous users should not browse public files
+        files = []
 
     return render_template('files/index.html', files=files)
 

@@ -21,6 +21,8 @@ class File(db.Model):
     # User ownership (nullable for backwards compatibility with anonymous uploads)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     is_public = db.Column(db.Boolean, default=True, nullable=False)  # Public vs private file
+    # Browsable controls whether file appears in Public Files listing (opt-in)
+    is_browsable = db.Column(db.Boolean, default=False, nullable=False)
     
     def __repr__(self):
         return f'<File {self.original_name}>'
