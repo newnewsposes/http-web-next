@@ -14,10 +14,10 @@ if [ "$EUID" -eq 0 ]; then
         echo "Aborting. Re-run as a non-root deployment user or re-run and answer 'y' to continue."
         exit 1
     fi
-    SUDO=""
+    SUDO_CMD=""
     DEPLOY_USER=${SUDO_USER:-root}
 else
-    SUDO="sudo"
+    SUDO_CMD="sudo"
     DEPLOY_USER=$USER
 fi
 
@@ -33,59 +33,59 @@ SECRET_KEY=$(openssl rand -hex 32)
 
 echo ""
 echo "📦 Installing system dependencies..."
-$SUDO apt update
-$SUDO apt install -y python3-pip python3-venv nginx postgresql certbot python3-certbot-nginx git
+$SUDO_CMD apt update
+$SUDO_CMD apt install -y python3-pip python3-venv nginx postgresql certbot python3-certbot-nginx git
 
 echo ""
 echo "🗄️  Setting up PostgreSQL..."
 
 # Check PostgreSQL version
-PG_VERSION=$($SUDO -u postgres psql -tAc "SELECT version();" | grep -oP "PostgreSQL \K[0-9]+")
+PG_VERSION=$(sudo -u postgres psql -tAc "SELECT version();" | grep -oP "PostgreSQL \K[0-9]+")
 echo "Detected PostgreSQL version: $PG_VERSION"
 
 # Check if database exists
-DB_EXISTS=$($SUDO -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='filehosting'")
+DB_EXISTS=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='filehosting'")
 
 if [ "$DB_EXISTS" = "1" ]; then
     echo "⚠️  Database 'filehosting' already exists"
     read -p "Rebuild from scratch? This will DELETE ALL DATA! (y/N): " REBUILD
     if [ "${REBUILD,,}" = "y" ]; then
         echo "🗑️  Dropping existing database..."
-        $SUDO -u postgres psql -c "DROP DATABASE filehosting;"
-        $SUDO -u postgres psql -c "CREATE DATABASE filehosting;"
+        sudo -u postgres psql -c "DROP DATABASE filehosting;"
+        sudo -u postgres psql -c "CREATE DATABASE filehosting;"
         echo "✅ Database recreated"
     else
         echo "Using existing database"
     fi
 else
-    $SUDO -u postgres psql -c "CREATE DATABASE filehosting;"
+    sudo -u postgres psql -c "CREATE DATABASE filehosting;"
     echo "✅ Database created"
 fi
 
 # Create user if doesn't exist, otherwise update password
-USER_EXISTS=$($SUDO -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='fileuser'")
+USER_EXISTS=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='fileuser'")
 if [ "$USER_EXISTS" != "1" ]; then
-    $SUDO -u postgres psql -c "CREATE USER fileuser WITH PASSWORD '$DB_PASSWORD';"
+    sudo -u postgres psql -c "CREATE USER fileuser WITH PASSWORD '$DB_PASSWORD';"
     echo "✅ User created"
 else
     echo "User 'fileuser' exists, updating password..."
-    $SUDO -u postgres psql -c "ALTER USER fileuser WITH PASSWORD '$DB_PASSWORD';"
+    sudo -u postgres psql -c "ALTER USER fileuser WITH PASSWORD '$DB_PASSWORD';"
 fi
 
 # Grant all necessary permissions (PostgreSQL 15+ compatible)
-$SUDO -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE filehosting TO fileuser;"
-$SUDO -u postgres psql -d filehosting -c "GRANT ALL ON SCHEMA public TO fileuser;"
-$SUDO -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO fileuser;"
-$SUDO -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO fileuser;"
-$SUDO -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO fileuser;"
-$SUDO -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO fileuser;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE filehosting TO fileuser;"
+sudo -u postgres psql -d filehosting -c "GRANT ALL ON SCHEMA public TO fileuser;"
+sudo -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO fileuser;"
+sudo -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO fileuser;"
+sudo -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO fileuser;"
+sudo -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO fileuser;"
 
 echo "✅ Database permissions configured"
 
 echo ""
 echo "📁 Setting up application directory..."
-$SUDO mkdir -p $INSTALL_DIR
-$SUDO chown $DEPLOY_USER:$DEPLOY_USER $INSTALL_DIR
+$SUDO_CMD mkdir -p $INSTALL_DIR
+$SUDO_CMD chown $DEPLOY_USER:$DEPLOY_USER $INSTALL_DIR
 
 if [ -d "$INSTALL_DIR/.git" ]; then
     echo "Updating existing installation..."
@@ -159,7 +159,7 @@ EOF
 
 echo ""
 echo "🔧 Creating systemd service..."
-$SUDO tee /etc/systemd/system/ThisIsCloud.service > /dev/null << EOF
+$SUDO_CMD tee /etc/systemd/system/ThisIsCloud.service > /dev/null << EOF
 [Unit]
 Description=ThisIsCloud file hosting platform
 After=network.target postgresql.service
@@ -178,13 +178,13 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-$SUDO systemctl daemon-reload
-$SUDO systemctl enable ThisIsCloud
-$SUDO systemctl start ThisIsCloud
+$SUDO_CMD systemctl daemon-reload
+$SUDO_CMD systemctl enable ThisIsCloud
+$SUDO_CMD systemctl start ThisIsCloud
 
 echo ""
 echo "🌐 Configuring Nginx..."
-$SUDO tee /etc/nginx/sites-available/ThisIsCloud > /dev/null << EOF
+$SUDO_CMD tee /etc/nginx/sites-available/ThisIsCloud > /dev/null << EOF
 server {
     listen 80;
     server_name $DOMAIN;
@@ -221,13 +221,13 @@ server {
 }
 EOF
 
-$SUDO ln -sf /etc/nginx/sites-available/ThisIsCloud /etc/nginx/sites-enabled/
-$SUDO nginx -t
-$SUDO systemctl restart nginx
+$SUDO_CMD ln -sf /etc/nginx/sites-available/ThisIsCloud /etc/nginx/sites-enabled/
+$SUDO_CMD nginx -t
+$SUDO_CMD systemctl restart nginx
 
 echo ""
 echo "🔒 Setting up SSL certificate..."
-$SUDO certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m $ADMIN_EMAIL || echo "⚠️  SSL setup failed. Run manually: sudo certbot --nginx -d $DOMAIN"
+$SUDO_CMD certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m $ADMIN_EMAIL || echo "⚠️  SSL setup failed. Run manually: sudo certbot --nginx -d $DOMAIN"
 
 echo ""
 echo "✅ Deployment complete!"
@@ -239,9 +239,9 @@ echo "Admin user: $ADMIN_USER"
 echo "Install location: $INSTALL_DIR"
 echo ""
 echo "🔧 Management commands:"
-echo "$SUDO systemctl status ThisIsCloud   # Check status"
-echo "$SUDO systemctl restart ThisIsCloud  # Restart app"
-echo "$SUDO systemctl stop ThisIsCloud     # Stop app"
-echo "$SUDO journalctl -u ThisIsCloud -f   # View logs"
+echo "$SUDO_CMD systemctl status ThisIsCloud   # Check status"
+echo "$SUDO_CMD systemctl restart ThisIsCloud  # Restart app"
+echo "$SUDO_CMD systemctl stop ThisIsCloud     # Stop app"
+echo "$SUDO_CMD journalctl -u ThisIsCloud -f   # View logs"
 echo ""
 echo "🎉 Your file hosting platform is ready!"
