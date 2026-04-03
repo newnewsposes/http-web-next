@@ -1,5 +1,5 @@
 """
-Flask application factory for HaloDrop.
+Flask application factory for ThisIsCloud.
 Initializes the app, database, and blueprints.
 """
 from flask import Flask

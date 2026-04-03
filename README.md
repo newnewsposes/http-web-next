@@ -1,4 +1,4 @@
-# HaloDrop 🚀
+# ThisIsCloud 🚀
 
 > **A modern, production-ready file hosting platform with advanced features**
 
@@ -60,8 +60,8 @@ Built with Flask • SQLAlchemy • Modern JavaScript • Dark UI
 
 ```bash
 # Clone the repository
-git clone https://github.com/newnewsposes/HaloDrop.git
-cd HaloDrop
+git clone https://github.com/newnewsposes/ThisIsCloud.git
+cd ThisIsCloud
 
 # Create virtual environment
 python3 -m venv venv
@@ -86,7 +86,7 @@ Visit **http://localhost:5000**
 ## 📁 Project Structure
 
 ```
-HaloDrop/
+ThisIsCloud/
 ├── app/
 │   ├── __init__.py              # App factory
 │   ├── blueprints/              # Route handlers
@@ -181,7 +181,7 @@ GRANT ALL PRIVILEGES ON DATABASE filehosting TO fileuser;
 #### 3. Configure application
 
 ```bash
-cd /var/www/HaloDrop
+cd /var/www/ThisIsCloud
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -196,34 +196,34 @@ flask db upgrade
 
 #### 4. Create systemd service
 
-`/etc/systemd/system/HaloDrop.service`:
+`/etc/systemd/system/ThisIsCloud.service`:
 
 ```ini
 [Unit]
-Description=HaloDrop file hosting
+Description=ThisIsCloud file hosting
 After=network.target
 
 [Service]
 User=www-data
-WorkingDirectory=/var/www/HaloDrop
-Environment="PATH=/var/www/HaloDrop/venv/bin"
+WorkingDirectory=/var/www/ThisIsCloud
+Environment="PATH=/var/www/ThisIsCloud/venv/bin"
 Environment="SECRET_KEY=your-secret-key"
 Environment="DATABASE_URL=postgresql://fileuser:yourpassword@localhost/filehosting"
 Environment="SESSION_COOKIE_SECURE=True"
-ExecStart=/var/www/HaloDrop/venv/bin/gunicorn -w 4 -b 127.0.0.1:8000 run:app
+ExecStart=/var/www/ThisIsCloud/venv/bin/gunicorn -w 4 -b 127.0.0.1:8000 run:app
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 ```bash
-sudo systemctl enable HaloDrop
-sudo systemctl start HaloDrop
+sudo systemctl enable ThisIsCloud
+sudo systemctl start ThisIsCloud
 ```
 
 #### 5. Configure Nginx
 
-`/etc/nginx/sites-available/HaloDrop`:
+`/etc/nginx/sites-available/ThisIsCloud`:
 
 ```nginx
 server {
@@ -246,14 +246,14 @@ server {
     }
 
     location /static {
-        alias /var/www/HaloDrop/app/static;
+        alias /var/www/ThisIsCloud/app/static;
         expires 30d;
     }
 }
 ```
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/HaloDrop /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/ThisIsCloud /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 ```

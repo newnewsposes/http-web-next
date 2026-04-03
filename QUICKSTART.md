@@ -3,7 +3,7 @@
 ## Local Development (Test Everything)
 
 ```bash
-cd /root/.openclaw/workspace/HaloDrop
+cd /root/.openclaw/workspace/ThisIsCloud
 
 # Create virtual environment
 python3 -m venv venv
@@ -52,8 +52,8 @@ Visit: http://localhost:5000
 
 ```bash
 # On your VPS
-git clone https://github.com/newnewsposes/HaloDrop.git
-cd HaloDrop
+git clone https://github.com/newnewsposes/ThisIsCloud.git
+cd ThisIsCloud
 chmod +x deploy.sh
 ./deploy.sh
 ```
@@ -69,8 +69,8 @@ Follow prompts. Script handles:
 
 ```bash
 # Clone repo
-git clone https://github.com/newnewsposes/HaloDrop.git
-cd HaloDrop
+git clone https://github.com/newnewsposes/ThisIsCloud.git
+cd ThisIsCloud
 
 # Set environment
 export SECRET_KEY=$(openssl rand -hex 32)
@@ -95,10 +95,10 @@ docker-compose exec web flask shell
 
 ```bash
 # View logs
-sudo journalctl -u HaloDrop -f
+sudo journalctl -u ThisIsCloud -f
 
 # Restart service
-sudo systemctl restart HaloDrop
+sudo systemctl restart ThisIsCloud
 
 # Database migrations
 source venv/bin/activate
@@ -154,7 +154,7 @@ Edit `app/blueprints/api.py`:
 
 ### Database errors
 ```bash
-cd /root/.openclaw/workspace/HaloDrop
+cd /root/.openclaw/workspace/ThisIsCloud
 source venv/bin/activate
 flask db stamp head
 flask db migrate
@@ -169,7 +169,7 @@ sudo chmod -R 755 HostedFiles/
 
 ### Service won't start
 ```bash
-sudo journalctl -u HaloDrop -n 50
+sudo journalctl -u ThisIsCloud -n 50
 ```
 
 ### Can't login
@@ -196,5 +196,5 @@ flask shell
 
 ---
 
-Repository: https://github.com/newnewsposes/HaloDrop
+Repository: https://github.com/newnewsposes/ThisIsCloud
 Full docs: See README.md and PROJECT-COMPLETE.md

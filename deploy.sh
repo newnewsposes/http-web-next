@@ -1,9 +1,9 @@
 #!/bin/bash
-# Deployment script for HaloDrop
+# Deployment script for ThisIsCloud
 
 set -e
 
-echo "🚀 HaloDrop Deployment Script"
+echo "🚀 ThisIsCloud Deployment Script"
 echo "==================================="
 
 # Check if running as root
@@ -16,8 +16,8 @@ fi
 read -p "Enter your domain name (e.g., files.example.com): " DOMAIN
 read -s -p "Enter database password: " DB_PASSWORD
 echo
-read -p "Install location [/var/www/HaloDrop]: " INSTALL_DIR
-INSTALL_DIR=${INSTALL_DIR:-/var/www/HaloDrop}
+read -p "Install location [/var/www/ThisIsCloud]: " INSTALL_DIR
+INSTALL_DIR=${INSTALL_DIR:-/var/www/ThisIsCloud}
 
 # Generate secret key
 SECRET_KEY=$(openssl rand -hex 32)
@@ -44,7 +44,7 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     git pull
 else
     echo "Cloning repository..."
-    git clone https://github.com/newnewsposes/HaloDrop.git $INSTALL_DIR
+    git clone https://github.com/newnewsposes/ThisIsCloud.git $INSTALL_DIR
     cd $INSTALL_DIR
 fi
 
@@ -90,9 +90,9 @@ EOF
 
 echo ""
 echo "🔧 Creating systemd service..."
-sudo tee /etc/systemd/system/HaloDrop.service > /dev/null << EOF
+sudo tee /etc/systemd/system/ThisIsCloud.service > /dev/null << EOF
 [Unit]
-Description=HaloDrop file hosting platform
+Description=ThisIsCloud file hosting platform
 After=network.target postgresql.service
 
 [Service]
@@ -110,12 +110,12 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl enable HaloDrop
-sudo systemctl start HaloDrop
+sudo systemctl enable ThisIsCloud
+sudo systemctl start ThisIsCloud
 
 echo ""
 echo "🌐 Configuring Nginx..."
-sudo tee /etc/nginx/sites-available/HaloDrop > /dev/null << EOF
+sudo tee /etc/nginx/sites-available/ThisIsCloud > /dev/null << EOF
 server {
     listen 80;
     server_name $DOMAIN;
@@ -152,7 +152,7 @@ server {
 }
 EOF
 
-sudo ln -sf /etc/nginx/sites-available/HaloDrop /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/ThisIsCloud /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 
@@ -170,9 +170,9 @@ echo "Admin user: $ADMIN_USER"
 echo "Install location: $INSTALL_DIR"
 echo ""
 echo "🔧 Management commands:"
-echo "sudo systemctl status HaloDrop   # Check status"
-echo "sudo systemctl restart HaloDrop  # Restart app"
-echo "sudo systemctl stop HaloDrop     # Stop app"
-echo "sudo journalctl -u HaloDrop -f   # View logs"
+echo "sudo systemctl status ThisIsCloud   # Check status"
+echo "sudo systemctl restart ThisIsCloud  # Restart app"
+echo "sudo systemctl stop ThisIsCloud     # Stop app"
+echo "sudo journalctl -u ThisIsCloud -f   # View logs"
 echo ""
 echo "🎉 Your file hosting platform is ready!"
