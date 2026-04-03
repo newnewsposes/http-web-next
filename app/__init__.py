@@ -79,7 +79,8 @@ def create_app():
     csrf.exempt(api_bp)
 
     # Provide BASE_URL config (optional override via env)
-    app.config['BASE_URL'] = os.environ.get('BASE_URL', None)
+    # Default hardcoded to http://ir.khargoosh.tech:5000 as requested
+    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://ir.khargoosh.tech:5000')
 
     # Inject BASE_URL into templates (fallback to request.host_url)
     from flask import request
