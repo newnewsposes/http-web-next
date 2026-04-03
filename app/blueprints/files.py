@@ -13,14 +13,20 @@ files_bp = Blueprint('files', __name__, url_prefix='/files')
 
 @files_bp.route('/')
 def index():
-    """List all uploaded files."""
-    # Show public files + user's private files if logged in
-    if current_user.is_authenticated:
-        files = File.query.filter(
-            db.or_(File.is_public == True, File.user_id == current_user.id)
-        ).order_by(File.uploaded_at.desc()).all()
-    else:
-        files = File.query.filter_by(is_public=True).order_by(File.uploaded_at.desc()).all()
+    """List all uploaded files. Require login to view file lists.
+
+    Public share links (share/<token>) continue to work for external access.
+    """
+    if not current_user.is_authenticated:
+        # Require users to sign in before browsing files
+        from flask import flash, redirect, url_for
+        flash('Please log in to view files', 'info')
+        return redirect(url_for('auth.login'))
+
+    # Show public files + user's private files
+    files = File.query.filter(
+        db.or_(File.is_public == True, File.user_id == current_user.id)
+    ).order_by(File.uploaded_at.desc()).all()
     
     return render_template('files/index.html', files=files)
 
