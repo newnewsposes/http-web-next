@@ -152,12 +152,58 @@ class ChunkedUploader {
 }
 
 // Share link copy function
-function copyShareLink(url) {
-    navigator.clipboard.writeText(url).then(() => {
-        showToast('Share link copied to clipboard!', 'success');
-    }).catch(() => {
-        showToast('Failed to copy link', 'error');
-    });
+function copyShareLink(url, el) {
+    // Try navigator.clipboard first (secure contexts)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Link copied to clipboard!', 'success');
+            if (el) {
+                const original = el.innerHTML;
+                el.innerHTML = 'Copied!';
+                setTimeout(() => { el.innerHTML = original; }, 2000);
+            }
+        }).catch((err) => {
+            // Fallback to legacy method
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = url;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Link copied to clipboard!', 'success');
+                if (el) {
+                    const original = el.innerHTML;
+                    el.innerHTML = 'Copied!';
+                    setTimeout(() => { el.innerHTML = original; }, 2000);
+                }
+            } catch (e) {
+                showToast('Failed to copy link', 'error');
+            }
+        });
+    } else {
+        // Legacy copy fallback
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = url;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('Link copied to clipboard!', 'success');
+            if (el) {
+                const original = el.innerHTML;
+                el.innerHTML = 'Copied!';
+                setTimeout(() => { el.innerHTML = original; }, 2000);
+            }
+        } catch (e) {
+            showToast('Failed to copy link', 'error');
+        }
+    }
 }
 
 // Toast notification
