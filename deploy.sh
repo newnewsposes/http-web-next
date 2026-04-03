@@ -91,17 +91,13 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     echo "Updating existing installation..."
     cd $INSTALL_DIR
     # Unset proxy variables for git operations
-    env -u LD_PRELOAD -u http_proxy -u https_proxy git pull
+    LD_PRELOAD="" http_proxy="" https_proxy="" git pull
 else
     echo "Cloning repository..."
     REPO_URL="https://github.com/newnewsposes/http-web-next.git"
-    # Try direct clone without proxychains
-    if env -u LD_PRELOAD -u http_proxy -u https_proxy GIT_TERMINAL_PROMPT=0 git clone "$REPO_URL" "$INSTALL_DIR"; then
-        echo "✅ Cloned via direct connection"
-    else
-        echo "Direct clone failed — falling back to normal git clone"
-        git clone "$REPO_URL" "$INSTALL_DIR"
-    fi
+    # Clone without proxychains - force empty LD_PRELOAD
+    echo "Cloning without proxy..."
+    LD_PRELOAD="" http_proxy="" https_proxy="" GIT_TERMINAL_PROMPT=0 git clone "$REPO_URL" "$INSTALL_DIR"
     cd $INSTALL_DIR
 fi
 
