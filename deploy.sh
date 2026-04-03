@@ -88,59 +88,42 @@ if [ ! -d "migrations" ]; then
     flask db migrate -m "Initial migration" || true
 fi
 
-# Ensure database is reachable; if not, fall back to sqlite for initial setup
-python - <<'PY'
+# Always create local sqlite tables first to ensure schema exists (prevents DB-connect failures during fresh deploy)
+# This will not change your configured DATABASE_URL but ensures files.db has tables
+env DATABASE_URL="sqlite:///files.db" python - <<'PY'
 from app import create_app, db
-from sqlalchemy.exc import OperationalError
 app = create_app()
 with app.app_context():
-    engine = db.get_engine()
-    try:
-        # try a simple connection
-        conn = engine.connect()
-        conn.close()
-        print('Database reachable via configured DATABASE_URL')
-        need_sqlite_fallback = False
-    except OperationalError as e:
-        print('Configured database not reachable:', e)
-        need_sqlite_fallback = True
-
-if need_sqlite_fallback:
-    print('Falling back to local SQLite for initial setup (files.db)')
-    # set env var for this shell process (will be used below when running commands)
-    import os
-    os.environ['DATABASE_URL'] = 'sqlite:///files.db'
-    # create tables via SQLAlchemy
-    with app.app_context():
-        db.create_all()
-        print('Created tables in local files.db')
-else:
-    # attempt migrations
-    print('Applying migrations to configured database')
-    # call flask db upgrade from shell after this script returns
+    db.create_all()
+    print('Ensured DB tables in local files.db via db.create_all()')
 PY
 
-# If database was reachable, run migrations; otherwise, we've created sqlite tables
+# Now attempt to run alembic migrations against the configured DB (if available)
 python - <<'PY'
 import os
+from alembic import command
+from alembic.config import Config
 from sqlalchemy.exc import OperationalError
 from app import create_app, db
+
 app = create_app()
 with app.app_context():
     uri = app.config.get('SQLALCHEMY_DATABASE_URI')
+    print('Configured SQLALCHEMY_DATABASE_URI =', uri)
     if uri and uri.startswith('sqlite'):
-        print('Using sqlite DB; skipping alembic upgrade (tables created)')
+        print('Configured DB is sqlite; alembic upgrade skipped (local files.db already created)')
     else:
         try:
-            print('Running alembic upgrade...')
-            from alembic import command
-            from alembic.config import Config
+            print('Attempting alembic upgrade against configured DB...')
             cfg = Config('migrations/alembic.ini')
             command.upgrade(cfg, 'head')
             print('Alembic upgrade completed')
+        except OperationalError as oe:
+            print('OperationalError during alembic upgrade:', oe)
+            print('Configured DB may be unreachable; continuing with local sqlite setup. You can re-run migrations later when DB is available.')
         except Exception as e:
             print('Alembic upgrade failed:', e)
-            print('If the configured DB is temporarily unavailable, re-run deploy.sh after resolving DB connectivity')
+            print('You may need to run migrations when the DB is available.')
 PY
 
 echo ""
