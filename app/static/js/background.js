@@ -166,11 +166,30 @@ class InteractiveBackground {
 // Expose InteractiveBackground to global so we can lazy-init
 window.InteractiveBackground = InteractiveBackground;
 
+// Helper to create or return singleton instance
+window.getInteractiveBg = function() {
+    if (!window._interactiveBg) {
+        try {
+            window._interactiveBg = new InteractiveBackground();
+        } catch (e) {
+            console.error('Failed to init InteractiveBackground', e);
+            window._interactiveBg = null;
+        }
+    }
+    return window._interactiveBg;
+};
+
+// Convenience setter for intensity
+window.setBgIntensity = function(value) {
+    const bg = window.getInteractiveBg();
+    if (bg && typeof bg.setIntensity === 'function') bg.setIntensity(value);
+};
+
 // Initialize on page load only if allowed (base file may lazy-load)
 document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('bgEnabled');
     const allow = saved !== 'false' && !document.body.classList.contains('reduced-motion');
     if (allow) {
-        new InteractiveBackground();
+        window.getInteractiveBg();
     }
 });
