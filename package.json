@@ -1,0 +1,15 @@
+{
+  "name": "http-web-next",
+  "version": "1.0.0",
+  "description": "Modern file hosting platform - frontend build tooling",
+  "private": true,
+  "scripts": {
+    "build:js": "esbuild app/static/js/pjax.js app/static/js/background.js app/static/js/upload.js --bundle --minify --outdir=app/static/dist --platform=browser --format=esm --target=es2017",
+    "build:css": "esbuild app/static/css/style.css --bundle --minify --outdir=app/static/dist --loader:.css=text",
+    "build": "npm run build:js && npm run build:css",
+    "watch": "esbuild app/static/js/pjax.js app/static/js/background.js app/static/js/upload.js --bundle --outdir=app/static/dist --platform=browser --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.0"
+  }
+}
