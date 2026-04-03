@@ -54,7 +54,15 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     git pull
 else
     echo "Cloning repository..."
-    git clone https://github.com/newnewsposes/ThisIsCloud.git $INSTALL_DIR
+    # Prefer public http-web-next repo and attempt clone without using http(s) proxy
+    REPO_URL="https://github.com/newnewsposes/http-web-next.git"
+    # Try non-proxied clone first to avoid proxychains prompting for credentials
+    if env -u http_proxy -u https_proxy GIT_TERMINAL_PROMPT=0 git clone "$REPO_URL" "$INSTALL_DIR"; then
+        echo "Cloned via direct connection"
+    else
+        echo "Direct clone failed — falling back to normal git clone (may prompt for credentials)"
+        git clone "$REPO_URL" "$INSTALL_DIR"
+    fi
     cd $INSTALL_DIR
 fi
 
