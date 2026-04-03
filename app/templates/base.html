@@ -186,5 +186,60 @@
             }
         });
     </script>
+
+    <!-- Inline fallback for share button in case bundled/dev JS doesn't load -->
+    <script>
+        (function(){
+            function fallbackCopy(text) {
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        return navigator.clipboard.writeText(text);
+                    }
+                } catch (e) {}
+                return new Promise(function(resolve, reject){
+                    try {
+                        var ta = document.createElement('textarea');
+                        ta.value = text;
+                        ta.style.position = 'fixed';
+                        ta.style.left = '-9999px';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        resolve();
+                    } catch (err) { reject(err); }
+                });
+            }
+
+            function showTemporary(button) {
+                var orig = button.innerHTML;
+                button.innerHTML = 'Copied!';
+                setTimeout(function(){ button.innerHTML = orig; }, 2000);
+            }
+
+            document.addEventListener('click', function(e){
+                try {
+                    var btn = e.target.closest && e.target.closest('.btn-share');
+                    if (!btn) return;
+                    var url = btn.getAttribute('data-share-url');
+                    if (!url) return;
+                    // try global copyShareLink if present
+                    if (typeof window.copyShareLink === 'function'){
+                        try { window.copyShareLink(url, btn); return; } catch(e){}
+                    }
+                    // fallback inline copy
+                    fallbackCopy(url).then(function(){
+                        // show simple toast if available
+                        if (window.showToast) window.showToast('Link copied to clipboard!', 'success');
+                        else alert('Link copied to clipboard!');
+                        showTemporary(btn);
+                    }).catch(function(){
+                        // last resort: prompt
+                        try { window.prompt('Copy this link:', url); } catch(e){}
+                    });
+                } catch(err) { /* ignore */ }
+            });
+        })();
+    </script>
 </body>
 </html>
