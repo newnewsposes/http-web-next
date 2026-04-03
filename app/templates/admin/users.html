@@ -50,13 +50,13 @@
                 </td>
                 <td class="actions">
                     {% if user.id != current_user.id %}
-                    <form method="POST" action="{{ url_for('admin.toggle_user_active', user_id=user.id) }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('admin.toggle_user_active', user_id=user.id) }}" class="admin-toggle-form" style="display: inline;">
                         <button type="submit" class="btn btn-sm btn-warning">
                             {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
                         </button>
                     </form>
                     
-                    <form method="POST" action="{{ url_for('admin.toggle_user_admin', user_id=user.id) }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('admin.toggle_user_admin', user_id=user.id) }}" class="admin-toggle-form" style="display: inline;">
                         <button type="submit" class="btn btn-sm btn-info">
                             {% if user.is_admin %}Revoke Admin{% else %}Make Admin{% endif %}
                         </button>
@@ -106,6 +106,8 @@
         </form>
     </div>
 </div>
+
+<script src="{{ url_for('static', filename='js/admin-users.js') }}" defer></script>
 
 <script>
 function showQuotaModal(userId, username, currentQuota) {
