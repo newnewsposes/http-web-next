@@ -1,12 +1,12 @@
 #!/bin/bash
-# Deployment script for ThisIsCloud
+# Complete deployment script for ThisIsCloud - works from scratch
 
 set -e
 
 echo "🚀 ThisIsCloud Deployment Script"
 echo "==================================="
 
-# Allow running as root or via sudo. If running as root, warn and confirm.
+# Allow running as root or via sudo
 if [ "$EUID" -eq 0 ]; then
     echo "⚠️  You are running this script as root. This is allowed but not recommended."
     read -p "Continue as root? (y/N): " CONT
@@ -15,7 +15,6 @@ if [ "$EUID" -eq 0 ]; then
         exit 1
     fi
     SUDO=""
-    # If script was invoked via sudo, SUDO_USER may be set to the invoking user
     DEPLOY_USER=${SUDO_USER:-root}
 else
     SUDO="sudo"
@@ -34,69 +33,73 @@ SECRET_KEY=$(openssl rand -hex 32)
 
 echo ""
 echo "📦 Installing system dependencies..."
-sudo apt update
-sudo apt install -y python3-pip python3-venv nginx postgresql certbot python3-certbot-nginx
+$SUDO apt update
+$SUDO apt install -y python3-pip python3-venv nginx postgresql certbot python3-certbot-nginx git
 
 echo ""
 echo "🗄️  Setting up PostgreSQL..."
 
+# Check PostgreSQL version
+PG_VERSION=$($SUDO -u postgres psql -tAc "SELECT version();" | grep -oP "PostgreSQL \K[0-9]+")
+echo "Detected PostgreSQL version: $PG_VERSION"
+
 # Check if database exists
-DB_EXISTS=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='filehosting'")
+DB_EXISTS=$($SUDO -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='filehosting'")
 
 if [ "$DB_EXISTS" = "1" ]; then
     echo "⚠️  Database 'filehosting' already exists"
     read -p "Rebuild from scratch? This will DELETE ALL DATA! (y/N): " REBUILD
     if [ "${REBUILD,,}" = "y" ]; then
         echo "🗑️  Dropping existing database..."
-        sudo -u postgres psql -c "DROP DATABASE filehosting;"
-        sudo -u postgres psql -c "CREATE DATABASE filehosting;"
+        $SUDO -u postgres psql -c "DROP DATABASE filehosting;"
+        $SUDO -u postgres psql -c "CREATE DATABASE filehosting;"
         echo "✅ Database recreated"
     else
         echo "Using existing database"
     fi
 else
-    sudo -u postgres psql -c "CREATE DATABASE filehosting;"
+    $SUDO -u postgres psql -c "CREATE DATABASE filehosting;"
     echo "✅ Database created"
 fi
 
-# Create user if doesn't exist
-USER_EXISTS=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='fileuser'")
+# Create user if doesn't exist, otherwise update password
+USER_EXISTS=$($SUDO -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='fileuser'")
 if [ "$USER_EXISTS" != "1" ]; then
-    sudo -u postgres psql -c "CREATE USER fileuser WITH PASSWORD '$DB_PASSWORD';"
+    $SUDO -u postgres psql -c "CREATE USER fileuser WITH PASSWORD '$DB_PASSWORD';"
     echo "✅ User created"
 else
     echo "User 'fileuser' exists, updating password..."
-    sudo -u postgres psql -c "ALTER USER fileuser WITH PASSWORD '$DB_PASSWORD';"
+    $SUDO -u postgres psql -c "ALTER USER fileuser WITH PASSWORD '$DB_PASSWORD';"
 fi
 
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE filehosting TO fileuser;"
+# Grant all necessary permissions (PostgreSQL 15+ compatible)
+$SUDO -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE filehosting TO fileuser;"
+$SUDO -u postgres psql -d filehosting -c "GRANT ALL ON SCHEMA public TO fileuser;"
+$SUDO -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO fileuser;"
+$SUDO -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO fileuser;"
+$SUDO -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO fileuser;"
+$SUDO -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO fileuser;"
 
-# PostgreSQL 15+ requires explicit schema permissions
-sudo -u postgres psql -d filehosting -c "GRANT ALL ON SCHEMA public TO fileuser;"
-sudo -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO fileuser;"
-sudo -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO fileuser;"
-sudo -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO fileuser;"
-sudo -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO fileuser;"
+echo "✅ Database permissions configured"
 
 echo ""
 echo "📁 Setting up application directory..."
-sudo mkdir -p $INSTALL_DIR
-sudo chown $USER:$USER $INSTALL_DIR
+$SUDO mkdir -p $INSTALL_DIR
+$SUDO chown $DEPLOY_USER:$DEPLOY_USER $INSTALL_DIR
 
 if [ -d "$INSTALL_DIR/.git" ]; then
     echo "Updating existing installation..."
     cd $INSTALL_DIR
-    git pull
+    # Unset proxy variables for git operations
+    env -u LD_PRELOAD -u http_proxy -u https_proxy git pull
 else
     echo "Cloning repository..."
-    # Prefer public http-web-next repo and attempt clone without using http(s) proxy
     REPO_URL="https://github.com/newnewsposes/http-web-next.git"
-    # Try non-proxied clone first to avoid proxychains prompting for credentials
-    # Unset LD_PRELOAD and proxy envs to bypass proxychains if it's preloaded
-    if env -u http_proxy -u https_proxy GIT_TERMINAL_PROMPT=0 git clone "$REPO_URL" "$INSTALL_DIR"; then
-        echo "Cloned via direct connection"
+    # Try direct clone without proxychains
+    if env -u LD_PRELOAD -u http_proxy -u https_proxy GIT_TERMINAL_PROMPT=0 git clone "$REPO_URL" "$INSTALL_DIR"; then
+        echo "✅ Cloned via direct connection"
     else
-        echo "Direct clone failed — falling back to normal git clone (may prompt for credentials)"
+        echo "Direct clone failed — falling back to normal git clone"
         git clone "$REPO_URL" "$INSTALL_DIR"
     fi
     cd $INSTALL_DIR
@@ -115,9 +118,9 @@ echo "💾 Creating database tables..."
 export SECRET_KEY="$SECRET_KEY"
 export DATABASE_URL="postgresql://fileuser:$DB_PASSWORD@localhost/filehosting"
 
-# Create all tables using db.create_all() - simpler and more reliable than migrations
+# Create all tables using db.create_all()
 # IMPORTANT: Unset LD_PRELOAD to bypass proxychains for localhost PostgreSQL
-env -u LD_PRELOAD python - <<'PY'
+env -u LD_PRELOAD python3 - <<'PY'
 from app import create_app, db
 
 app = create_app()
@@ -135,7 +138,7 @@ read -p "Admin email: " ADMIN_EMAIL
 read -s -p "Admin password: " ADMIN_PASS
 echo
 
-# IMPORTANT: Unset LD_PRELOAD to bypass proxychains for localhost PostgreSQL
+# Create admin user without proxychains
 env -u LD_PRELOAD python3 << EOF
 from app import create_app, db
 from app.models.user import User
@@ -156,13 +159,13 @@ EOF
 
 echo ""
 echo "🔧 Creating systemd service..."
-sudo tee /etc/systemd/system/ThisIsCloud.service > /dev/null << EOF
+$SUDO tee /etc/systemd/system/ThisIsCloud.service > /dev/null << EOF
 [Unit]
 Description=ThisIsCloud file hosting platform
 After=network.target postgresql.service
 
 [Service]
-User=$USER
+User=$DEPLOY_USER
 WorkingDirectory=$INSTALL_DIR
 Environment="PATH=$INSTALL_DIR/venv/bin"
 Environment="SECRET_KEY=$SECRET_KEY"
@@ -175,13 +178,13 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable ThisIsCloud
-sudo systemctl start ThisIsCloud
+$SUDO systemctl daemon-reload
+$SUDO systemctl enable ThisIsCloud
+$SUDO systemctl start ThisIsCloud
 
 echo ""
 echo "🌐 Configuring Nginx..."
-sudo tee /etc/nginx/sites-available/ThisIsCloud > /dev/null << EOF
+$SUDO tee /etc/nginx/sites-available/ThisIsCloud > /dev/null << EOF
 server {
     listen 80;
     server_name $DOMAIN;
@@ -218,13 +221,13 @@ server {
 }
 EOF
 
-sudo ln -sf /etc/nginx/sites-available/ThisIsCloud /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+$SUDO ln -sf /etc/nginx/sites-available/ThisIsCloud /etc/nginx/sites-enabled/
+$SUDO nginx -t
+$SUDO systemctl restart nginx
 
 echo ""
 echo "🔒 Setting up SSL certificate..."
-sudo certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m $ADMIN_EMAIL || echo "⚠️  SSL setup failed. Run manually: sudo certbot --nginx -d $DOMAIN"
+$SUDO certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m $ADMIN_EMAIL || echo "⚠️  SSL setup failed. Run manually: sudo certbot --nginx -d $DOMAIN"
 
 echo ""
 echo "✅ Deployment complete!"
@@ -236,9 +239,9 @@ echo "Admin user: $ADMIN_USER"
 echo "Install location: $INSTALL_DIR"
 echo ""
 echo "🔧 Management commands:"
-echo "sudo systemctl status ThisIsCloud   # Check status"
-echo "sudo systemctl restart ThisIsCloud  # Restart app"
-echo "sudo systemctl stop ThisIsCloud     # Stop app"
-echo "sudo journalctl -u ThisIsCloud -f   # View logs"
+echo "$SUDO systemctl status ThisIsCloud   # Check status"
+echo "$SUDO systemctl restart ThisIsCloud  # Restart app"
+echo "$SUDO systemctl stop ThisIsCloud     # Stop app"
+echo "$SUDO journalctl -u ThisIsCloud -f   # View logs"
 echo ""
 echo "🎉 Your file hosting platform is ready!"
