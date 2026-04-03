@@ -7,6 +7,7 @@ class ChunkedUploader {
         this.file = file;
         this.chunkSize = options.chunkSize || 1024 * 1024; // 1MB default
         this.isPublic = options.isPublic !== undefined ? options.isPublic : true;
+        this.isBrowsable = options.isBrowsable !== undefined ? options.isBrowsable : false;
         this.uploadId = null;
         this.totalChunks = Math.ceil(file.size / this.chunkSize);
         this.uploadedChunks = 0;
@@ -123,7 +124,8 @@ class ChunkedUploader {
                 totalChunks: this.totalChunks,
                 filename: this.file.name,
                 mimeType: this.file.type,
-                isPublic: this.isPublic
+                isPublic: this.isPublic,
+                isBrowsable: this.isBrowsable
             })
         });
         
@@ -256,13 +258,17 @@ function handleFileUpload(file) {
     const uploadSection = document.querySelector('.upload-section');
     uploadSection.appendChild(progressContainer);
 
-    // Get privacy setting
+    // Get privacy and browsable settings
     const isPublicCheckbox = document.querySelector('input[name="is_public"]');
     const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : true;
+    
+    const isBrowsableCheckbox = document.querySelector('input[name="is_browsable"]');
+    const isBrowsable = isBrowsableCheckbox ? isBrowsableCheckbox.checked : false;
 
     // Start chunked upload
     const uploader = new ChunkedUploader(file, {
         isPublic: isPublic,
+        isBrowsable: isBrowsable,
         onProgress: (percent, uploaded, total) => {
             const progressBar = progressContainer.querySelector('.progress-bar');
             const percentText = progressContainer.querySelector('.upload-percent');

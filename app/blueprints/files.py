@@ -13,17 +13,26 @@ files_bp = Blueprint('files', __name__, url_prefix='/files')
 
 @files_bp.route('/')
 def index():
-    """List all uploaded files.
+    """List uploaded files.
 
-    Public files are visible to everyone. Private files are visible to owners and admins only.
+    - Admins see all files.
+    - Authenticated users see their own files plus public files marked as browsable.
+    - Anonymous users see no files.
     """
     if current_user.is_authenticated:
-        # Logged-in users see public files + their own files
-        files = File.query.filter(
-            db.or_(File.is_public == True, File.user_id == current_user.id)
-        ).order_by(File.uploaded_at.desc()).all()
+        if current_user.is_admin:
+            # Admins can see everything
+            files = File.query.order_by(File.uploaded_at.desc()).all()
+        else:
+            # Regular users see their own files plus public files that are marked browsable
+            files = File.query.filter(
+                db.or_(
+                    db.and_(File.is_public == True, File.is_browsable == True),
+                    File.user_id == current_user.id
+                )
+            ).order_by(File.uploaded_at.desc()).all()
     else:
-        # Anonymous users should not browse public files
+        # Anonymous users are not allowed to browse in this deployment
         files = []
 
     return render_template('files/index.html', files=files)
