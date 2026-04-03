@@ -23,8 +23,21 @@ fi
 
 # Configuration
 read -p "Enter your domain name (e.g., files.example.com): " DOMAIN
+# Validate domain is not empty
+while [ -z "$DOMAIN" ]; do
+    echo "⚠️  Domain cannot be empty!"
+    read -p "Enter your domain name (e.g., files.example.com): " DOMAIN
+done
+
 read -s -p "Enter database password: " DB_PASSWORD
 echo
+# Validate password is not empty
+while [ -z "$DB_PASSWORD" ]; do
+    echo "⚠️  Password cannot be empty!"
+    read -s -p "Enter database password: " DB_PASSWORD
+    echo
+done
+
 read -p "Install location [/var/www/ThisIsCloud]: " INSTALL_DIR
 INSTALL_DIR=${INSTALL_DIR:-/var/www/ThisIsCloud}
 
