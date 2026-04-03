@@ -99,7 +99,7 @@ new Chart(storageByUserCtx, {
         labels: {{ storage_by_user | map(attribute='username') | list | tojson }},
         datasets: [{
             label: 'Storage (MB)',
-            data: {{ storage_by_user | map(attribute='storage') | map('default', 0) | map('int') | map('divide', 1024*1024) | list | tojson }},
+            data: {{ storage_values_mb | tojson }},
             backgroundColor: '#6366f1'
         }]
     },

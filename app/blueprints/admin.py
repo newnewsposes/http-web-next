@@ -201,8 +201,14 @@ def analytics():
         User.username,
         func.sum(File.size).label('storage')
     ).join(File, File.user_id == User.id).group_by(User.id).order_by(desc('storage')).limit(10).all()
-    
+
+    # Prepare labels and values in MB for the template
+    storage_labels = [row.username for row in storage_by_user]
+    storage_values_mb = [int((row.storage or 0) / (1024 * 1024)) for row in storage_by_user]
+
     return render_template('admin/analytics.html',
                          upload_trends=upload_trends,
                          file_types=file_types,
-                         storage_by_user=storage_by_user)
+                         storage_by_user=storage_by_user,
+                         storage_labels=storage_labels,
+                         storage_values_mb=storage_values_mb)
