@@ -6,6 +6,7 @@
 <div class="files-page">
     <h1><i data-lucide="folder-open" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;"></i>All Files</h1>
 
+    {% if current_user.is_authenticated %}
     <section class="upload-section">
         <h2><i data-lucide="upload-cloud" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>Upload File</h2>
         
@@ -22,7 +23,6 @@
             </div>
         </div>
         
-        {% if current_user.is_authenticated %}
         <div class="upload-options">
             <label class="checkbox-label">
                 <input type="checkbox" name="is_public" checked> 
@@ -30,8 +30,15 @@
                 Make public (anyone can view)
             </label>
         </div>
-        {% endif %}
     </section>
+    {% else %}
+    <section class="login-prompt">
+        <div class="alert alert-info">
+            <i data-lucide="lock" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+            <strong>Login required:</strong> You must <a href="{{ url_for('auth.login') }}">sign in</a> to upload files.
+        </div>
+    </section>
+    {% endif %}
 
     <section class="files-section">
         <h2><i data-lucide="files" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;"></i>Public Files</h2>

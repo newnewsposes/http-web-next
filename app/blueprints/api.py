@@ -11,6 +11,7 @@ import uuid
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 @api_bp.route('/upload/init', methods=['POST'])
+@login_required  # SECURITY: Only authenticated users can upload
 @rate_limit(max_requests=20, window_seconds=60)  # 20 upload sessions per minute
 def init_upload():
     """Initialize a chunked upload session."""
@@ -22,10 +23,9 @@ def init_upload():
     filename = data['filename']
     file_size = data['fileSize']
     
-    # Check storage quota if user is logged in
-    if current_user.is_authenticated:
-        if not current_user.has_storage_available(file_size):
-            return jsonify({'error': 'Storage quota exceeded'}), 403
+    # Check storage quota
+    if not current_user.has_storage_available(file_size):
+        return jsonify({'error': 'Storage quota exceeded'}), 403
     
     # Generate upload ID
     upload_id = str(uuid.uuid4())
@@ -37,6 +37,7 @@ def init_upload():
     }), 200
 
 @api_bp.route('/upload/chunk', methods=['POST'])
+@login_required  # SECURITY: Only authenticated users can upload chunks
 @rate_limit(max_requests=100, window_seconds=60)  # 100 chunks per minute
 def upload_chunk():
     """Upload a single chunk."""
@@ -81,6 +82,7 @@ def upload_status(upload_id):
         return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/upload/complete', methods=['POST'])
+@login_required  # SECURITY: Only authenticated users can complete uploads
 def complete_upload():
     """Merge chunks and finalize upload."""
     data = request.get_json()
@@ -104,14 +106,13 @@ def complete_upload():
         }), 400
     
     try:
-        # Merge chunks
-        user_id = current_user.id if current_user.is_authenticated else None
+        # Merge chunks - always use current authenticated user
         new_file = UploadService.merge_chunks(
             upload_id, 
             total_chunks, 
             filename, 
             mimetype,
-            user_id=user_id,
+            user_id=current_user.id,  # Always use authenticated user's ID
             is_public=is_public
         )
         
@@ -135,6 +136,7 @@ def cancel_upload(upload_id):
         return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/files/validate', methods=['POST'])
+@login_required  # SECURITY: Only authenticated users can validate uploads
 def validate_file():
     """Validate file before upload (size, type, etc)."""
     data = request.get_json()
@@ -151,14 +153,13 @@ def validate_file():
             'error': f'File size exceeds maximum allowed ({max_size / 1024 / 1024:.0f} MB)'
         }), 200
     
-    # Check quota for logged-in users
-    if current_user.is_authenticated:
-        if not current_user.has_storage_available(file_size):
-            storage_used = current_user.get_storage_used()
-            storage_quota = current_user.storage_quota
-            return jsonify({
-                'valid': False,
-                'error': f'Storage quota exceeded ({storage_used / 1024 / 1024 / 1024:.2f} GB / {storage_quota / 1024 / 1024 / 1024:.2f} GB used)'
-            }), 200
+    # Check quota for authenticated user
+    if not current_user.has_storage_available(file_size):
+        storage_used = current_user.get_storage_used()
+        storage_quota = current_user.storage_quota
+        return jsonify({
+            'valid': False,
+            'error': f'Storage quota exceeded ({storage_used / 1024 / 1024 / 1024:.2f} GB / {storage_quota / 1024 / 1024 / 1024:.2f} GB used)'
+        }), 200
     
     return jsonify({'valid': True}), 200
