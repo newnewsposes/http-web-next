@@ -206,6 +206,10 @@ function copyShareLink(url, el) {
     }
 }
 
+// Expose functions to global scope so inline onclick handlers work when this file is loaded as a module
+try { window.copyShareLink = copyShareLink; } catch(e) {}
+try { window.showToast = showToast; } catch(e) {}
+
 // Toast notification
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
