@@ -20,7 +20,7 @@
         </thead>
         <tbody>
             {% for file in files %}
-            <tr>
+            <tr id="file-row-{{ file.id }}">
                 <td class="truncate">{{ file.original_name }}</td>
                 <td>{{ file.owner.username if file.owner else 'Anonymous' }}</td>
                 <td>{{ file.format_size() }}</td>
@@ -36,7 +36,7 @@
                 <td class="actions">
                     <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn btn-sm btn-primary">Download</a>
                     <button class="btn btn-sm btn-secondary" onclick="copyShareLink('{{ url_for('files.share', share_token=file.share_token, _external=True) }}')">Share</button>
-                    <form method="POST" action="{{ url_for('files.delete', file_id=file.id) }}" style="display: inline;" onsubmit="return confirm('Delete this file?');">
+                    <form method="POST" action="{{ url_for('files.delete', file_id=file.id) }}" class="delete-form" style="display: inline;">
                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                     </form>
                 </td>
@@ -61,4 +61,5 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin-files.js') }}" defer></script>
 {% endblock %}
