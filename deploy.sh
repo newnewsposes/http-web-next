@@ -71,6 +71,13 @@ fi
 
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE filehosting TO fileuser;"
 
+# PostgreSQL 15+ requires explicit schema permissions
+sudo -u postgres psql -d filehosting -c "GRANT ALL ON SCHEMA public TO fileuser;"
+sudo -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO fileuser;"
+sudo -u postgres psql -d filehosting -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO fileuser;"
+sudo -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO fileuser;"
+sudo -u postgres psql -d filehosting -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO fileuser;"
+
 echo ""
 echo "📁 Setting up application directory..."
 sudo mkdir -p $INSTALL_DIR
