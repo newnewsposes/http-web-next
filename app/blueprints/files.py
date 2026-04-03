@@ -30,9 +30,12 @@ def index():
     
     return render_template('files/index.html', files=files)
 
+from flask_login import login_required
+
 @files_bp.route('/upload', methods=['POST'])
+@login_required
 def upload():
-    """Handle file upload."""
+    """Handle file upload. Only authenticated users may upload."""
     if 'file' not in request.files:
         flash('No file provided', 'error')
         return redirect(url_for('files.index'))
@@ -82,18 +85,18 @@ def upload():
     return redirect(url_for('files.index'))
 
 @files_bp.route('/download/<int:file_id>')
+@login_required
 def download(file_id):
-    """Download a file by its ID."""
+    """Download a file by its ID. Login required."""
     file_record = File.query.get_or_404(file_id)
-    
-    # Check access permissions
-    if not file_record.is_public:
-        if not current_user.is_authenticated or (file_record.user_id != current_user.id and not current_user.is_admin):
-            abort(403)
-    
+
+    # Check access permissions (owner or admin)
+    if file_record.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
     file_record.downloads += 1
     db.session.commit()
-    
+
     return send_from_directory(
         current_app.config['UPLOAD_FOLDER'],
         file_record.filename,
@@ -102,14 +105,18 @@ def download(file_id):
     )
 
 @files_bp.route('/share/<share_token>')
+@login_required
 def share(share_token):
-    """Download a file via its share token."""
+    """Download a file via its share token. Login required to prevent unauthenticated sharing."""
     file_record = File.query.filter_by(share_token=share_token).first_or_404()
-    
-    # Share links work for public files, or private files if you have the token
+
+    # Only allow owners or admins to use share links, or authenticated users that have access
+    if file_record.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
     file_record.downloads += 1
     db.session.commit()
-    
+
     return send_from_directory(
         current_app.config['UPLOAD_FOLDER'],
         file_record.filename,
