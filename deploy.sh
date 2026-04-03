@@ -58,7 +58,7 @@ else
     REPO_URL="https://github.com/newnewsposes/http-web-next.git"
     # Try non-proxied clone first to avoid proxychains prompting for credentials
     # Unset LD_PRELOAD and proxy envs to bypass proxychains if it's preloaded
-    if env -u LD_PRELOAD -u http_proxy -u https_proxy GIT_TERMINAL_PROMPT=0 git clone "$REPO_URL" "$INSTALL_DIR"; then
+    if env -u http_proxy -u https_proxy GIT_TERMINAL_PROMPT=0 git clone "$REPO_URL" "$INSTALL_DIR"; then
         echo "Cloned via direct connection"
     else
         echo "Direct clone failed — falling back to normal git clone (may prompt for credentials)"
