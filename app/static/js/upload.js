@@ -192,45 +192,49 @@ function formatFileSize(bytes) {
     return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
 
-// Enhanced upload form with drag & drop
-document.addEventListener('DOMContentLoaded', () => {
-    const uploadForm = document.querySelector('.upload-form');
+// Expose an initializer so this can be re-run after PJAX navigation
+export function initUploads() {
     const fileInput = document.getElementById('file-input');
     const dropZone = document.querySelector('.drop-zone');
-    
-    if (dropZone) {
-        // Drag & drop handlers
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
-        });
-        
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('drag-over');
-        });
-        
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileUpload(files[0]);
-            }
-        });
-    }
-    
-    // File input change handler
-    if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleFileUpload(file);
-            }
-        });
-    }
-});
 
+    function attachHandlers() {
+        if (dropZone) {
+            // Drag & drop handlers
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files[0]);
+                }
+            });
+        }
+
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFileUpload(file);
+                }
+            });
+        }
+    }
+
+    // Initialize handlers immediately
+    attachHandlers();
+}
+
+// Modified handleFileUpload to use PJAX refresh instead of full reload
 function handleFileUpload(file) {
     // Create progress UI
     const progressContainer = document.createElement('div');
@@ -248,39 +252,44 @@ function handleFileUpload(file) {
             <button class="btn-cancel" onclick="cancelUpload()">Cancel</button>
         </div>
     `;
-    
+
     const uploadSection = document.querySelector('.upload-section');
     uploadSection.appendChild(progressContainer);
-    
+
     // Get privacy setting
     const isPublicCheckbox = document.querySelector('input[name="is_public"]');
     const isPublic = isPublicCheckbox ? isPublicCheckbox.checked : true;
-    
+
     // Start chunked upload
     const uploader = new ChunkedUploader(file, {
         isPublic: isPublic,
         onProgress: (percent, uploaded, total) => {
             const progressBar = progressContainer.querySelector('.progress-bar');
             const percentText = progressContainer.querySelector('.upload-percent');
-            
+
             progressBar.style.width = `${percent}%`;
             percentText.textContent = `${Math.round(percent)}% (${uploaded}/${total} chunks)`;
         },
         onComplete: (data) => {
             showToast(`File uploaded successfully: ${data.filename}`, 'success');
             setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+                if (window.pjaxNavigate) {
+                    // Refresh current page content via PJAX
+                    window.pjaxNavigate(window.location.pathname, false);
+                } else {
+                    window.location.reload();
+                }
+            }, 900);
         },
         onError: (error) => {
             showToast(`Upload failed: ${error}`, 'error');
             progressContainer.remove();
         }
     });
-    
+
     // Store uploader for cancel
     window.currentUploader = uploader;
-    
+
     uploader.start();
 }
 
@@ -289,4 +298,11 @@ function cancelUpload() {
         window.currentUploader.abort();
         showToast('Upload cancelled', 'info');
     }
+}
+
+// Auto-init for non-module environments
+if (typeof window !== 'undefined') {
+    window.initUploads = () => {
+        try { initUploads(); } catch (e) { /* ignore */ }
+    };
 }

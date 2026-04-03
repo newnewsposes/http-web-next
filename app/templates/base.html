@@ -74,11 +74,49 @@
     </footer>
     
     <!-- Interactive background -->
-    <script src="{{ url_for('static', filename='js/background.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/background.js') }}" defer></script>
     
-    <!-- Initialize Lucide icons -->
+    <!-- Uploads and PJAX -->
+    <script src="{{ url_for('static', filename='js/pjax.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/upload.js') }}" type="module" defer></script>
+
+    <!-- Initialize Lucide icons and page handlers -->
     <script>
-        lucide.createIcons();
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize icons
+            if (window.lucide) lucide.createIcons();
+
+            // Page load hook
+            window.onPageLoad = function() {
+                // Re-init upload handlers
+                if (window.initUploads) window.initUploads();
+                // Re-init icons
+                if (window.lucide) lucide.createIcons();
+                // Lazy-load background after first meaningful paint
+                if (window.enableInteractiveBg) {
+                    // background script auto-inits on DOMContentLoaded; ensure it's present
+                    try {
+                        if (window.InteractiveBackground) new InteractiveBackground();
+                    } catch (e) { /* ignore */ }
+                }
+            };
+
+            // Initializers for first load
+            if (window.initUploads) window.initUploads();
+            if (window.lucide) setTimeout(() => lucide.createIcons(), 100);
+
+            // Lazy-load background after 1s (to avoid blocking)
+            if ('matchMedia' in window && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                window.enableInteractiveBg = false;
+            } else {
+                window.enableInteractiveBg = true;
+                setTimeout(() => {
+                    try {
+                        if (window.InteractiveBackground) new InteractiveBackground();
+                    } catch (e) { /* ignore */ }
+                }, 1000);
+            }
+        });
     </script>
 </body>
 </html>
