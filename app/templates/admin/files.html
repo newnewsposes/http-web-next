@@ -35,7 +35,7 @@
                 </td>
                 <td class="actions">
                     <a href="{{ url_for('files.download', file_id=file.id) }}" class="btn btn-sm btn-primary">Download</a>
-                    <button class="btn btn-sm btn-secondary" onclick="copyShareLink('{{ url_for('files.share', share_token=file.share_token, _external=True) }}')">Share</button>
+                    <button class="btn btn-sm btn-secondary btn-share" data-share-url="{{ BASE_URL }}{{ url_for('files.share', share_token=file.share_token) }}">Share</button>
                     <form method="POST" action="{{ url_for('files.delete', file_id=file.id) }}" class="delete-form" style="display: inline;">
                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                     </form>
