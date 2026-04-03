@@ -5,6 +5,7 @@ from app import db
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from sqlalchemy import select
 
 class User(UserMixin, db.Model):
     """User account with authentication and file ownership."""
@@ -34,6 +35,7 @@ class User(UserMixin, db.Model):
     
     def get_storage_used(self):
         """Calculate total storage used by this user's files."""
+        from app.models.file import File  # Import here to avoid circular dependency
         return db.session.query(db.func.sum(File.size)).filter_by(user_id=self.id).scalar() or 0
     
     def has_storage_available(self, file_size):
