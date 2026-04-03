@@ -14,6 +14,15 @@ This script runs in the app context and modifies the database accordingly.
 """
 import argparse
 import sys
+from pathlib import Path
+
+# Ensure project root is on sys.path so 'app' package can be imported when running
+# this script from any working directory.
+THIS_FILE = Path(__file__).resolve()
+PROJECT_ROOT = THIS_FILE.parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from app import create_app, db
 from app.models.user import User
 
