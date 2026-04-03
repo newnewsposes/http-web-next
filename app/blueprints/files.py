@@ -99,12 +99,22 @@ def upload():
 @files_bp.route('/download/<int:file_id>')
 @login_required
 def download(file_id):
-    """Download a file by its ID. Login required."""
+    """Download a file by its ID. Login required.
+
+    Policy:
+    - If the file is public (is_public=True), any authenticated user may download it.
+    - Otherwise, only the owner or admins may download.
+    """
     file_record = File.query.get_or_404(file_id)
 
-    # Check access permissions (owner or admin)
-    if file_record.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
+    # Allow download if file is public and user is authenticated
+    if file_record.is_public:
+        # authenticated check is enforced by @login_required
+        pass
+    else:
+        # Otherwise only owner or admin can download
+        if file_record.user_id != current_user.id and not current_user.is_admin:
+            abort(403)
 
     file_record.downloads += 1
     db.session.commit()
