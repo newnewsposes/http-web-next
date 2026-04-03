@@ -11,7 +11,7 @@
       <p>Files uploaded</p>
     </div>
     <div class="stat-card">
-      <h3>{{ '%.2f'|(storage_used/1024/1024/1024) }} GB</h3>
+      <h3>{{ (storage_used / 1024 / 1024 / 1024) | round(2) }} GB</h3>
       <p>Storage used</p>
     </div>
   </div>
