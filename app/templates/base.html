@@ -171,5 +171,20 @@
             }
         });
     </script>
+    <script>
+        // Debug: force-enable interactive background if available
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                if (window.getInteractiveBg) {
+                    window.getInteractiveBg();
+                    console.info('Interactive background force-enabled (debug)');
+                } else {
+                    console.info('Interactive background API not found');
+                }
+            } catch (e) {
+                console.warn('Failed to force-enable background', e);
+            }
+        });
+    </script>
 </body>
 </html>
