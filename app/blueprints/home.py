@@ -22,6 +22,6 @@ def landing():
     features = [
         {'title': 'Fast uploads', 'desc': 'Chunked, resumable uploads for large files.'},
         {'title': 'Secure sharing', 'desc': 'Private and public files with share tokens.'},
-        {'title': 'Admin & analytics', 'desc': 'Manage users and monitor activity.'},
+        {'title': 'Privacy-first', 'desc': 'We don\'t scan your files — you control sharing and expiry.'},
     ]
     return render_template('home/landing.html', features=features)

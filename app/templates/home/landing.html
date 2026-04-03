@@ -5,11 +5,12 @@
 {% block content %}
 <div class="landing-hero">
   <div class="container">
-    <h1>Welcome to ThisIsCloud</h1>
-    <p class="lead">Fast, secure file hosting with modern UX — drag, drop, share.</p>
+    <h1 class="hero-title">ThisIsCloud</h1>
+    <p class="lead">A beautiful, private place to store and share your files — fast, reliable, and designed for humans.</p>
     {% if not current_user.is_authenticated %}
     <div class="cta">
       <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-cta">Get started — it's free</a>
+      <a href="{{ url_for('files.index') }}" class="btn btn-secondary btn-cta">Browse public files</a>
     </div>
     {% endif %}
   </div>
@@ -23,6 +24,16 @@
       <p>{{ f.desc }}</p>
     </div>
     {% endfor %}
+  </div>
+</section>
+
+<section class="showcase container">
+  <h2>Designed for speed and privacy</h2>
+  <p class="muted">Drag and drop, resumable uploads, and secure sharing — all in a clean interface that puts you in control.</p>
+  <div class="showcase-grid">
+    <div class="showcase-item">Fast uploads with chunking</div>
+    <div class="showcase-item">End-to-end sharing controls</div>
+    <div class="showcase-item">Simple team collaboration</div>
   </div>
 </section>
 
