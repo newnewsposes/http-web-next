@@ -370,4 +370,27 @@ if (typeof window !== 'undefined') {
     window.initUploads = () => {
         try { initUploads(); } catch (e) { /* ignore */ }
     };
+
+    // Delegate click handler for share buttons so it works regardless of load order
+    document.addEventListener('click', function(e) {
+        try {
+            const btn = e.target.closest && e.target.closest('.btn-share');
+            if (!btn) return;
+            const url = btn.getAttribute('data-share-url');
+            if (!url) return;
+            // Debug log
+            // console.debug('Share button clicked', url);
+            if (typeof copyShareLink === 'function') {
+                copyShareLink(url, btn);
+            } else if (window.copyShareLink) {
+                window.copyShareLink(url, btn);
+            } else {
+                // Last resort: show the URL in a prompt so user can copy manually
+                try { prompt('Copy this link:', url); } catch (e) {}
+            }
+        } catch (err) {
+            // swallow errors to avoid interrupting UI
+            // console.error('Share handler error', err);
+        }
+    });
 }
