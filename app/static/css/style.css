@@ -1193,6 +1193,67 @@ body {
     }
 }
 
+/* Accessibility: respect reduced motion preference */
+@media (prefers-reduced-motion: reduce), .reduced-motion {
+    * {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+    .spinner { animation: none !important; }
+}
+
+/* Settings panel */
+.settings-panel {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1100;
+    display: flex;
+    align-items: flex-end;
+}
+
+.settings-button {
+    background: linear-gradient(135deg, var(--card-bg), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.03);
+    color: var(--text);
+    padding: 0.6rem;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.settings-content {
+    display: none;
+    min-width: 220px;
+    margin-right: 0.75rem;
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.settings-panel .open .settings-content,
+.settings-panel .settings-content.open {
+    display: block;
+}
+
+.settings-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; color: var(--text); }
+
+/* Icon sizing tweaks */
+.nav-links i[role="img"], .nav-links svg { vertical-align: middle; margin-right: 6px; }
+.file-icon i, .file-icon svg { width: 56px; height: 56px; }
+.stat-icon i, .stat-icon svg { width: 48px; height: 48px; }
+
+/* Button padding refinement */
+.btn { padding: 0.6rem 1.2rem; }
+.btn-sm { padding: 0.45rem 0.9rem; }
+
+/* Ensure settings panel accessible focus */
+.settings-button:focus, .settings-button:hover { outline: none; box-shadow: 0 8px 20px rgba(99,102,241,0.25); }
+
 /* Loading spinner */
 @keyframes spin {
     to {
