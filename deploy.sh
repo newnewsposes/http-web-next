@@ -90,7 +90,8 @@ fi
 
 # Always create local sqlite tables first to ensure schema exists (prevents DB-connect failures during fresh deploy)
 # This will not change your configured DATABASE_URL but ensures files.db has tables
-env DATABASE_URL="sqlite:///files.db" python - <<'PY'
+# IMPORTANT: Unset LD_PRELOAD to bypass proxychains for localhost connections
+env -u LD_PRELOAD DATABASE_URL="sqlite:///files.db" python - <<'PY'
 from app import create_app, db
 app = create_app()
 with app.app_context():
@@ -99,7 +100,8 @@ with app.app_context():
 PY
 
 # Now attempt to run alembic migrations against the configured DB (if available)
-python - <<'PY'
+# IMPORTANT: Unset LD_PRELOAD to bypass proxychains for localhost PostgreSQL
+env -u LD_PRELOAD python - <<'PY'
 import os
 from alembic import command
 from alembic.config import Config
@@ -134,7 +136,8 @@ read -p "Admin email: " ADMIN_EMAIL
 read -s -p "Admin password: " ADMIN_PASS
 echo
 
-python3 << EOF
+# IMPORTANT: Unset LD_PRELOAD to bypass proxychains for localhost PostgreSQL
+env -u LD_PRELOAD python3 << EOF
 from app import create_app, db
 from app.models.user import User
 
