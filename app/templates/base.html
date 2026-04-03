@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}http-web-next{% endblock %}</title>
-    <!-- Production CSS (bundled) -->
-    {% set prod_css = url_for('static', filename='dist/style.min.css') %}
-    {% set dev_css = url_for('static', filename='css/style.css') %}
-    <link rel="stylesheet" href="{{ prod_css if (prod_css and prod_css|length) else dev_css }}" onerror="this.onerror=null;this.href='{{ dev_css }}'">
+    <!-- Development CSS (fallback) - using unbundled file until bundle issue is fixed -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
