@@ -68,18 +68,17 @@ def create_app():
     from app.blueprints.auth import auth_bp
     from app.blueprints.api import api_bp
     from app.blueprints.admin import admin_bp
+    from app.blueprints.home import home_bp
     app.register_blueprint(files_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(home_bp)
     
     # Exempt API endpoints from CSRF
     csrf.exempt(api_bp)
     
-    # Set root route
-    from flask import redirect, url_for
-    @app.route('/')
-    def index():
-        return redirect(url_for('files.index'))
+    # Set root route handled by home blueprint
+    # (home_bp defines @app.route('/'))
     
     return app
