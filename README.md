@@ -1,4 +1,4 @@
-# http-web-next 🚀
+# HaloDrop 🚀
 
 > **A modern, production-ready file hosting platform with advanced features**
 
@@ -60,8 +60,8 @@ Built with Flask • SQLAlchemy • Modern JavaScript • Dark UI
 
 ```bash
 # Clone the repository
-git clone https://github.com/newnewsposes/http-web-next.git
-cd http-web-next
+git clone https://github.com/newnewsposes/HaloDrop.git
+cd HaloDrop
 
 # Create virtual environment
 python3 -m venv venv
@@ -86,7 +86,7 @@ Visit **http://localhost:5000**
 ## 📁 Project Structure
 
 ```
-http-web-next/
+HaloDrop/
 ├── app/
 │   ├── __init__.py              # App factory
 │   ├── blueprints/              # Route handlers
@@ -181,7 +181,7 @@ GRANT ALL PRIVILEGES ON DATABASE filehosting TO fileuser;
 #### 3. Configure application
 
 ```bash
-cd /var/www/http-web-next
+cd /var/www/HaloDrop
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -196,34 +196,34 @@ flask db upgrade
 
 #### 4. Create systemd service
 
-`/etc/systemd/system/http-web-next.service`:
+`/etc/systemd/system/HaloDrop.service`:
 
 ```ini
 [Unit]
-Description=http-web-next file hosting
+Description=HaloDrop file hosting
 After=network.target
 
 [Service]
 User=www-data
-WorkingDirectory=/var/www/http-web-next
-Environment="PATH=/var/www/http-web-next/venv/bin"
+WorkingDirectory=/var/www/HaloDrop
+Environment="PATH=/var/www/HaloDrop/venv/bin"
 Environment="SECRET_KEY=your-secret-key"
 Environment="DATABASE_URL=postgresql://fileuser:yourpassword@localhost/filehosting"
 Environment="SESSION_COOKIE_SECURE=True"
-ExecStart=/var/www/http-web-next/venv/bin/gunicorn -w 4 -b 127.0.0.1:8000 run:app
+ExecStart=/var/www/HaloDrop/venv/bin/gunicorn -w 4 -b 127.0.0.1:8000 run:app
 
 [Install]
 WantedBy=multi-user.target
 ```
 
 ```bash
-sudo systemctl enable http-web-next
-sudo systemctl start http-web-next
+sudo systemctl enable HaloDrop
+sudo systemctl start HaloDrop
 ```
 
 #### 5. Configure Nginx
 
-`/etc/nginx/sites-available/http-web-next`:
+`/etc/nginx/sites-available/HaloDrop`:
 
 ```nginx
 server {
@@ -246,14 +246,14 @@ server {
     }
 
     location /static {
-        alias /var/www/http-web-next/app/static;
+        alias /var/www/HaloDrop/app/static;
         expires 30d;
     }
 }
 ```
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/http-web-next /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/HaloDrop /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 ```

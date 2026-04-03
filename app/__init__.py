@@ -1,5 +1,5 @@
 """
-Flask application factory for http-web-next.
+Flask application factory for HaloDrop.
 Initializes the app, database, and blueprints.
 """
 from flask import Flask
