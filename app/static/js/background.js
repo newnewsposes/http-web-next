@@ -8,7 +8,7 @@ class InteractiveBackground {
         this.ctx = this.canvas.getContext('2d');
         this.particles = [];
         this.mouse = { x: 0, y: 0 };
-        this.particleCount = 80;
+        this.particleCount = 150; // Increased from 80
         
         this.setupCanvas();
         this.createParticles();
@@ -30,8 +30,22 @@ class InteractiveBackground {
     }
     
     resize() {
+        const oldWidth = this.canvas.width;
+        const oldHeight = this.canvas.height;
+        
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        
+        // Adjust particle positions on resize to prevent cropping
+        if (oldWidth > 0 && oldHeight > 0) {
+            const scaleX = this.canvas.width / oldWidth;
+            const scaleY = this.canvas.height / oldHeight;
+            
+            this.particles.forEach(particle => {
+                particle.x *= scaleX;
+                particle.y *= scaleY;
+            });
+        }
     }
     
     createParticles() {
@@ -39,10 +53,10 @@ class InteractiveBackground {
             this.particles.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
+                vx: (Math.random() - 0.5) * 1.2, // Faster movement
+                vy: (Math.random() - 0.5) * 1.2, // Faster movement
                 radius: Math.random() * 2 + 1,
-                opacity: Math.random() * 0.5 + 0.2
+                opacity: Math.random() * 0.5 + 0.3
             });
         }
     }
@@ -72,28 +86,26 @@ class InteractiveBackground {
             particle.x += particle.vx;
             particle.y += particle.vy;
             
-            // Mouse attraction
+            // Mouse attraction (stronger effect)
             const dx = this.mouse.x - particle.x;
             const dy = this.mouse.y - particle.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < 150) {
-                const force = (150 - distance) / 150;
-                particle.vx += dx * force * 0.001;
-                particle.vy += dy * force * 0.001;
+            if (distance < 200) {
+                const force = (200 - distance) / 200;
+                particle.vx += dx * force * 0.002;
+                particle.vy += dy * force * 0.002;
             }
             
-            // Damping
-            particle.vx *= 0.99;
-            particle.vy *= 0.99;
+            // Less damping = more movement
+            particle.vx *= 0.995;
+            particle.vy *= 0.995;
             
-            // Boundary check
-            if (particle.x < 0 || particle.x > this.canvas.width) particle.vx *= -1;
-            if (particle.y < 0 || particle.y > this.canvas.height) particle.vy *= -1;
-            
-            // Keep in bounds
-            particle.x = Math.max(0, Math.min(this.canvas.width, particle.x));
-            particle.y = Math.max(0, Math.min(this.canvas.height, particle.y));
+            // Wrap around edges instead of bouncing
+            if (particle.x < 0) particle.x = this.canvas.width;
+            if (particle.x > this.canvas.width) particle.x = 0;
+            if (particle.y < 0) particle.y = this.canvas.height;
+            if (particle.y > this.canvas.height) particle.y = 0;
             
             // Draw particle
             this.ctx.beginPath();
@@ -101,17 +113,17 @@ class InteractiveBackground {
             this.ctx.fillStyle = `rgba(99, 102, 241, ${particle.opacity})`;
             this.ctx.fill();
             
-            // Draw connections
+            // Draw connections (increased distance for denser mesh)
             this.particles.slice(i + 1).forEach(otherParticle => {
                 const dx = otherParticle.x - particle.x;
                 const dy = otherParticle.y - particle.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                if (distance < 120) {
-                    const opacity = (1 - distance / 120) * 0.3;
+                if (distance < 150) { // Increased from 120
+                    const opacity = (1 - distance / 150) * 0.4; // Brighter lines
                     this.ctx.beginPath();
                     this.ctx.strokeStyle = `rgba(99, 102, 241, ${opacity})`;
-                    this.ctx.lineWidth = 0.5;
+                    this.ctx.lineWidth = 0.8; // Thicker lines
                     this.ctx.moveTo(particle.x, particle.y);
                     this.ctx.lineTo(otherParticle.x, otherParticle.y);
                     this.ctx.stroke();
